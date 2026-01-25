@@ -1,0 +1,8 @@
+{
+  "name": "UOU MOVEMENT - Chamado Platform",
+  "description": "A comprehensive SaaS platform for managing the 'Chamado UOU MOVEMENT' intensive training program, featuring admin management, user enrollment, LGPD-compliant consent generation, and payment tracking.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
