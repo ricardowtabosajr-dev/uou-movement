@@ -60,6 +60,12 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ user, onStartEnrollment }
     if (video.duration) {
       const progress = (video.currentTime / video.duration) * 100;
       setVideoProgress(progress);
+
+      // Fallback: libera o briefing quando atinge 95% do vídeo
+      // Isso resolve problemas com vídeos do WhatsApp que nem sempre disparam onEnded
+      if (progress >= 95 && !briefingCompleted) {
+        setBriefingCompleted(true);
+      }
     }
   };
 
