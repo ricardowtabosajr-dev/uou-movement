@@ -131,8 +131,8 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ user, onStartEnrollment }
                 controls={false}
                 disablePictureInPicture
               >
-                {/* VÍDEO LOCAL DE BRIEFING */}
-                <source src="/assets/videos/briefing.mp4" type="video/mp4" />
+                {/* VÍDEO DE EXEMPLO - SUBSTITUA POR UM VÍDEO COMPATÍVEL */}
+                <source src="https://vjs.zencdn.net/v/oceans.mp4" type="video/mp4" />
                 Seu navegador não suporta vídeos.
               </video>
               <div className="absolute inset-0 z-10 pointer-events-none"></div>
