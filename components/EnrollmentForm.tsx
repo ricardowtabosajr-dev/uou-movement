@@ -128,6 +128,13 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
 
   const startCamera = async () => {
     try {
+      // Verifica se mediaDevices está disponível (requer HTTPS ou localhost)
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.warn("Câmera não disponível: contexto não seguro (requer HTTPS)");
+        alert("Acesso à câmera requer conexão segura (HTTPS). Em localhost, tente acessar via 127.0.0.1:3000");
+        return;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
         audio: true
@@ -138,6 +145,7 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
       }
     } catch (err) {
       console.error("Erro ao acessar câmera:", err);
+      alert("Não foi possível acessar a câmera. Verifique as permissões do navegador.");
     }
   };
 
@@ -268,7 +276,7 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
           <div key={i} className="flex items-center group min-w-fit">
             <div className={`flex flex-col items-center gap-2 transition-all duration-300 ${step > i + 1 ? 'text-emerald-500' : step === i + 1 ? 'text-red-500' : 'text-slate-600'}`}>
               <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 transition-all shadow-lg ${step > i + 1 ? 'bg-emerald-500/10 border-emerald-500' :
-                  step === i + 1 ? 'bg-red-700 border-red-700 text-white animate-pulse' : 'border-slate-800 bg-slate-900'
+                step === i + 1 ? 'bg-red-700 border-red-700 text-white animate-pulse' : 'border-slate-800 bg-slate-900'
                 }`}>
                 {step > i + 1 ? <CheckCircle size={24} /> : <s.icon size={22} />}
               </div>
