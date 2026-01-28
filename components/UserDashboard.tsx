@@ -1,11 +1,11 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { UserProfile, EnrollmentStatus, PaymentStatus } from '../types';
-import { 
-  Calendar, 
-  MapPin, 
-  FileText, 
-  ArrowRight, 
+import {
+  Calendar,
+  MapPin,
+  FileText,
+  ArrowRight,
   AlertTriangle,
   CheckCircle2,
   Clock,
@@ -48,16 +48,24 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ user, onStartEnrollment }
   const handleTimeUpdate = () => {
     if (!videoRef.current) return;
     const video = videoRef.current;
+
+    // Protocolo de segurança: impede saltos para frente
     if (video.currentTime > lastTimeRef.current + 2) {
       video.currentTime = lastTimeRef.current;
     } else {
       lastTimeRef.current = video.currentTime;
     }
-    setVideoProgress((video.currentTime / video.duration) * 100);
+
+    // Cálculo de progresso com validação de duração
+    if (video.duration) {
+      const progress = (video.currentTime / video.duration) * 100;
+      setVideoProgress(progress);
+    }
   };
 
   const handleVideoEnd = () => {
     setBriefingCompleted(true);
+    setVideoProgress(100);
   };
 
   const getStatusDisplay = () => {
@@ -107,7 +115,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ user, onStartEnrollment }
             </div>
 
             <div className="relative aspect-video bg-black flex items-center justify-center group">
-              <video 
+              <video
                 ref={videoRef}
                 className="w-full h-full object-contain"
                 onTimeUpdate={handleTimeUpdate}
@@ -117,8 +125,8 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ user, onStartEnrollment }
                 controls={false}
                 disablePictureInPicture
               >
-                {/* VÍDEO ATUALIZADO CONFORME ANEXO - IGREJA PERSEGUIDA (PORTAS ABERTAS) */}
-                <source src="https://vjs.zencdn.net/v/oceans.mp4" type="video/mp4" />
+                {/* VÍDEO LOCAL DE BRIEFING */}
+                <source src="/assets/videos/briefing.mp4" type="video/mp4" />
                 Seu navegador não suporta vídeos.
               </video>
               <div className="absolute inset-0 z-10 pointer-events-none"></div>
@@ -144,9 +152,9 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ user, onStartEnrollment }
                 </button>
               ) : (
                 <div className="flex flex-col items-center gap-2">
-                   <div className="flex items-center gap-3 px-6 py-4 bg-slate-800 rounded-xl text-slate-400 font-black uppercase text-xs">
-                      <Loader2 className="animate-spin" size={18} /> Assistindo...
-                   </div>
+                  <div className="flex items-center gap-3 px-6 py-4 bg-slate-800 rounded-xl text-slate-400 font-black uppercase text-xs">
+                    <Loader2 className="animate-spin" size={18} /> Assistindo...
+                  </div>
                 </div>
               )}
             </div>
@@ -162,7 +170,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ user, onStartEnrollment }
               Bem-vindo ao Campo, <span className="text-red-500">{user.name.split(' ')[0]}</span>.
             </h2>
             <p className="text-slate-400 mb-6 leading-relaxed">
-              {isApproved 
+              {isApproved
                 ? "Sua convocação foi confirmada. Prepare-se para o embarque."
                 : "A jornada no UOU MOVEMENT exige prontidão. Complete os protocolos abaixo."
               }
@@ -195,31 +203,31 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ user, onStartEnrollment }
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
           <section className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-             <h3 className="font-black uppercase tracking-widest text-sm flex items-center gap-2 mb-8">
-               <Clock size={18} className="text-red-500" /> Timeline Operacional
-             </h3>
-             <div className="relative space-y-10 before:absolute before:inset-0 before:ml-5 before:w-0.5 before:bg-slate-800">
-                <TimelineItem title="Acesso Criado" desc="Identidade tática ativada." date="Status: OK" completed />
-                <TimelineItem title="Briefing e Inscrição" desc="Coleta de dados e verificação selfie." date={isPending ? "Pendente" : "Enviado"} active={isPending} completed={!isPending} />
-                <TimelineItem title="Logística e Jurídico" desc="Pagamento e aceite do termo." date={hasPaid ? "Confirmado" : "Aguardando"} active={!isPending && !hasPaid} completed={hasPaid} />
-                <TimelineItem title="Embarque Final" desc="Treinamento presencial." date="Out/2024" active={isApproved} completed={false} />
-             </div>
+            <h3 className="font-black uppercase tracking-widest text-sm flex items-center gap-2 mb-8">
+              <Clock size={18} className="text-red-500" /> Timeline Operacional
+            </h3>
+            <div className="relative space-y-10 before:absolute before:inset-0 before:ml-5 before:w-0.5 before:bg-slate-800">
+              <TimelineItem title="Acesso Criado" desc="Identidade tática ativada." date="Status: OK" completed />
+              <TimelineItem title="Briefing e Inscrição" desc="Coleta de dados e verificação selfie." date={isPending ? "Pendente" : "Enviado"} active={isPending} completed={!isPending} />
+              <TimelineItem title="Logística e Jurídico" desc="Pagamento e aceite do termo." date={hasPaid ? "Confirmado" : "Aguardando"} active={!isPending && !hasPaid} completed={hasPaid} />
+              <TimelineItem title="Embarque Final" desc="Treinamento presencial." date="Out/2024" active={isApproved} completed={false} />
+            </div>
           </section>
         </div>
         <div className="space-y-6">
-           <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-              <h3 className="font-black uppercase tracking-widest text-sm mb-6">Info Missão</h3>
-              <div className="space-y-5 text-sm">
-                 <div className="flex gap-4">
-                    <Calendar size={18} className="text-red-500" />
-                    <div><p className="text-[10px] text-slate-500 font-black">INÍCIO</p><p className="font-bold">12 Out, 2024</p></div>
-                 </div>
-                 <div className="flex gap-4">
-                    <MapPin size={18} className="text-red-500" />
-                    <div><p className="text-[10px] text-slate-500 font-black">BASE</p><p className="font-bold">Alpha (Sigilo)</p></div>
-                 </div>
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+            <h3 className="font-black uppercase tracking-widest text-sm mb-6">Info Missão</h3>
+            <div className="space-y-5 text-sm">
+              <div className="flex gap-4">
+                <Calendar size={18} className="text-red-500" />
+                <div><p className="text-[10px] text-slate-500 font-black">INÍCIO</p><p className="font-bold">12 Out, 2024</p></div>
               </div>
-           </div>
+              <div className="flex gap-4">
+                <MapPin size={18} className="text-red-500" />
+                <div><p className="text-[10px] text-slate-500 font-black">BASE</p><p className="font-bold">Alpha (Sigilo)</p></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

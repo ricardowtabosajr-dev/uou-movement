@@ -2,15 +2,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { UserProfile, EnrollmentData, PaymentStatus } from '../types';
 import { generateConsentTerm } from '../services/gemini';
-import { 
-  ArrowLeft, 
-  ArrowRight, 
-  ShieldCheck, 
-  Heart, 
-  Info, 
-  CreditCard, 
-  CheckCircle, 
-  FileText, 
+import {
+  ArrowLeft,
+  ArrowRight,
+  ShieldCheck,
+  Heart,
+  Info,
+  CreditCard,
+  CheckCircle,
+  FileText,
   FileDown,
   Loader2,
   MapPin,
@@ -34,7 +34,7 @@ import {
   AlertCircle,
   ShieldHalf
 } from 'lucide-react';
-import { jsPDF } from 'https://esm.sh/jspdf';
+import { jsPDF } from 'jspdf';
 
 interface EnrollmentFormProps {
   user: UserProfile;
@@ -47,7 +47,7 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
   const [consentTerm, setConsentTerm] = useState<string | null>(null);
-  
+
   // Estados para o Vídeo de Verificação
   const [recording, setRecording] = useState(false);
   const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
@@ -128,9 +128,9 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, 
-        audio: true 
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+        audio: true
       });
       setCameraStream(stream);
       if (videoPreviewRef.current) {
@@ -150,7 +150,7 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
 
   const startRecording = () => {
     if (!cameraStream) return;
-    
+
     const mediaRecorder = new MediaRecorder(cameraStream);
     mediaRecorderRef.current = mediaRecorder;
     const chunks: BlobPart[] = [];
@@ -203,7 +203,7 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
         return;
       }
     }
-    
+
     if (step === 4) {
       setLoading(true);
       const term = await generateConsentTerm(formData);
@@ -229,17 +229,17 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
     const margin = 20;
     const pageWidth = doc.internal.pageSize.getWidth();
     const maxLineWidth = pageWidth - margin * 2;
-    
+
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
     doc.text("TERMO DE RESPONSABILIDADE - UOU MOVEMENT", margin, 20);
-    
+
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     const cleanText = consentTerm.replace(/[#*]/g, '');
     const lines = doc.splitTextToSize(cleanText, maxLineWidth);
     doc.text(lines, margin, 35);
-    
+
     doc.save(`Inscricao_UOU_${formData.fullName.replace(/\s+/g, '_')}.pdf`);
   };
 
@@ -267,10 +267,9 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
         {steps.map((s, i) => (
           <div key={i} className="flex items-center group min-w-fit">
             <div className={`flex flex-col items-center gap-2 transition-all duration-300 ${step > i + 1 ? 'text-emerald-500' : step === i + 1 ? 'text-red-500' : 'text-slate-600'}`}>
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 transition-all shadow-lg ${
-                step > i + 1 ? 'bg-emerald-500/10 border-emerald-500' : 
-                step === i + 1 ? 'bg-red-700 border-red-700 text-white animate-pulse' : 'border-slate-800 bg-slate-900'
-              }`}>
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 transition-all shadow-lg ${step > i + 1 ? 'bg-emerald-500/10 border-emerald-500' :
+                  step === i + 1 ? 'bg-red-700 border-red-700 text-white animate-pulse' : 'border-slate-800 bg-slate-900'
+                }`}>
                 {step > i + 1 ? <CheckCircle size={24} /> : <s.icon size={22} />}
               </div>
               <span className="text-[10px] font-black uppercase tracking-widest">{s.title}</span>
@@ -284,7 +283,7 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
 
       <div className="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-6 md:p-12 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-700 via-amber-600 to-red-700"></div>
-        
+
         {step === 1 && (
           <div className="space-y-8 animate-in fade-in slide-in-from-right-4">
             <header>
@@ -298,7 +297,7 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <InputGroup label="Nome Completo" name="fullName" value={formData.fullName} onChange={handleChange} placeholder="Conforme documento" />
               <InputGroup label="Nome de Tratamento" name="nickname" value={formData.nickname} onChange={handleChange} placeholder="Como gosta de ser chamado" />
-              
+
               <div className="md:col-span-2 bg-slate-950/50 p-6 md:p-8 rounded-[2rem] border-2 border-dashed border-slate-800 space-y-6">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-black uppercase tracking-widest text-red-500 flex items-center gap-2">
@@ -310,7 +309,7 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
                     </button>
                   )}
                 </div>
-                
+
                 <div className="bg-red-950/20 p-4 rounded-xl border border-red-900/30">
                   <p className="text-[11px] text-red-400 leading-relaxed font-bold uppercase tracking-tight">
                     Instrução: Grave um vídeo de até 30 segundos dizendo seu nome e a frase: "Eu estou me inscrevendo para o Chamado UOU Movement".
@@ -359,7 +358,7 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
               </div>
 
               <InputGroup label="Data de Nascimento" name="birthDate" value={formData.birthDate} onChange={handleChange} type="date" />
-              
+
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Sexo</label>
                 <select name="gender" value={formData.gender} onChange={handleChange} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 outline-none focus:ring-2 ring-red-500/50 appearance-none text-slate-300">
@@ -380,7 +379,7 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <InputGroup label="Nome do Responsável" name="guardianName" value={formData.guardianName} onChange={handleChange} placeholder="Nome completo do pai, mãe ou tutor" />
-                    <InputGroup label="Telefone do Responsável" name="guardianPhone" value={formData.guardianPhone} onChange={handleChange} placeholder="(00) 00000-0000" icon={<Smartphone size={14}/>} />
+                    <InputGroup label="Telefone do Responsável" name="guardianPhone" value={formData.guardianPhone} onChange={handleChange} placeholder="(00) 00000-0000" icon={<Smartphone size={14} />} />
                   </div>
                 </div>
               )}
@@ -403,7 +402,7 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Tamanho Camiseta</label>
                 <div className="flex flex-wrap gap-2">
                   {['P', 'M', 'G', 'GG', 'EXG'].map(size => (
-                    <button key={size} type="button" onClick={() => setFormData({...formData, shirtSize: size})} className={`px-4 py-3 rounded-xl border-2 font-black transition-all text-xs ${formData.shirtSize === size ? 'bg-red-700 border-red-700 text-white shadow-lg' : 'bg-slate-950 border-slate-800 text-slate-600'}`}>
+                    <button key={size} type="button" onClick={() => setFormData({ ...formData, shirtSize: size })} className={`px-4 py-3 rounded-xl border-2 font-black transition-all text-xs ${formData.shirtSize === size ? 'bg-red-700 border-red-700 text-white shadow-lg' : 'bg-slate-950 border-slate-800 text-slate-600'}`}>
                       {size}
                     </button>
                   ))}
@@ -425,7 +424,7 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
             <div className="flex flex-col items-end gap-3 ml-auto">
               {step === 1 && (!videoBlob || (isMinor && (!formData.guardianName || !formData.guardianPhone))) && (
                 <div className="flex items-center gap-2 text-red-500 text-[11px] font-black uppercase tracking-widest animate-pulse">
-                  <AlertCircle size={14} /> 
+                  <AlertCircle size={14} />
                   {!videoBlob ? "Vídeo Obrigatório" : "Dados do Responsável Obrigatórios"}
                 </div>
               )}

@@ -23,18 +23,30 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess, i
     e.preventDefault();
     setLoading(true);
 
+    if (!email || !password || (mode === 'SIGNUP' && !name)) {
+      alert("Por favor, preencha todos os campos táticos.");
+      setLoading(false);
+      return;
+    }
+
+    if (!email.includes('@')) {
+      alert("Email operacional inválido.");
+      setLoading(false);
+      return;
+    }
+
     // Simulando processamento de autenticação/criação de conta
     setTimeout(() => {
       const mockUser: UserProfile = {
         id: Math.random().toString(36).substr(2, 9),
         name: mode === 'SIGNUP' ? name : 'Usuário Recrutado',
         email: email,
-        role: email.includes('admin') ? UserRole.ADMIN : UserRole.USER,
+        role: email.toLowerCase().includes('admin') ? UserRole.ADMIN : UserRole.USER,
         enrollmentStatus: EnrollmentStatus.PENDING,
         paymentStatus: PaymentStatus.UNPAID,
         avatarUrl: `https://picsum.photos/seed/${email}/100/100`
       };
-      
+
       // Salvar no localStorage para simular persistência individual
       const savedUsers = JSON.parse(localStorage.getItem('uou_users') || '[]');
       if (mode === 'SIGNUP') {
@@ -72,10 +84,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess, i
             {mode === 'SIGNUP' && (
               <div className="relative">
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   required
-                  placeholder="Seu Nome Completo" 
+                  placeholder="Seu Nome Completo"
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-12 pr-4 py-4 outline-none focus:ring-2 ring-red-500/50 text-sm font-medium"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -84,10 +96,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess, i
             )}
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-              <input 
-                type="email" 
+              <input
+                type="email"
                 required
-                placeholder="Seu Email Operacional" 
+                placeholder="Seu Email Operacional"
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-12 pr-4 py-4 outline-none focus:ring-2 ring-red-500/50 text-sm font-medium"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -95,17 +107,17 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess, i
             </div>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-              <input 
-                type="password" 
+              <input
+                type="password"
                 required
-                placeholder="Código de Acesso (Senha)" 
+                placeholder="Código de Acesso (Senha)"
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-12 pr-4 py-4 outline-none focus:ring-2 ring-red-500/50 text-sm font-medium"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
 
-            <button 
+            <button
               disabled={loading}
               className="w-full py-4 bg-red-700 hover:bg-red-600 disabled:bg-slate-800 disabled:text-slate-500 rounded-xl font-black uppercase tracking-wider transition-all flex items-center justify-center gap-3 shadow-xl shadow-red-900/20"
             >
@@ -118,7 +130,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess, i
           </form>
 
           <div className="mt-8 pt-8 border-t border-slate-800 text-center">
-            <button 
+            <button
               onClick={() => setMode(mode === 'LOGIN' ? 'SIGNUP' : 'LOGIN')}
               className="text-sm font-bold text-slate-400 hover:text-red-500 transition-colors"
             >
