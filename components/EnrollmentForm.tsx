@@ -32,7 +32,8 @@ import {
   Camera,
   Trash2,
   AlertCircle,
-  ShieldHalf
+  ShieldHalf,
+  QrCode
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 
@@ -419,8 +420,239 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
             </div>
           </div>
         )}
+        {step === 2 && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-right-4">
+            <header>
+              <h2 className="text-3xl font-black uppercase tracking-tighter flex items-center gap-3">
+                <div className="p-2 bg-red-700 rounded-lg"><MapPin size={24} /></div>
+                Localização e Base
+              </h2>
+              <p className="text-slate-500 text-sm mt-2 font-medium">Onde você está operando atualmente?</p>
+            </header>
 
-        {/* Demais passos omitidos por brevidade, mantendo-os inalterados funcionalmente */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <InputGroup label="Telefone Operacional" name="phone" value={formData.phone} onChange={handleChange} placeholder="(00) 00000-0000" icon={<Smartphone size={14} />} />
+              <InputGroup label="Instagram" name="instagram" value={formData.instagram} onChange={handleChange} placeholder="@seuusuario" icon={<Instagram size={14} />} />
+              
+              <div className="md:col-span-2">
+                <InputGroup label="Endereço Residencial" name="address" value={formData.address} onChange={handleChange} placeholder="Rua, número, complemento" />
+              </div>
+              
+              <InputGroup label="Bairro" name="neighborhood" value={formData.neighborhood} onChange={handleChange} placeholder="Seu bairro" />
+              <InputGroup label="CEP" name="cep" value={formData.cep} onChange={handleChange} placeholder="00000-000" />
+              <InputGroup label="Cidade" name="city" value={formData.city} onChange={handleChange} placeholder="Sua cidade" />
+              <InputGroup label="Estado" name="state" value={formData.state} onChange={handleChange} placeholder="UF" />
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-right-4">
+            <header>
+              <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tighter flex items-center gap-3">
+                <div className="p-2 bg-red-700 rounded-lg"><Church size={24} /></div>
+                Perfil Eclesiástico
+              </h2>
+              <p className="text-slate-500 text-sm mt-2 font-medium">Sua caminhada e compromisso ministerial.</p>
+            </header>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <InputGroup label="Nome da Igreja" name="churchName" value={formData.churchName} onChange={handleChange} placeholder="Onde você congrega" />
+              <InputGroup label="Nome do Pastor" name="pastorName" value={formData.pastorName} onChange={handleChange} placeholder="Líder direto" />
+              <InputGroup label="Telefone do Pastor" name="pastorPhone" value={formData.pastorPhone} onChange={handleChange} placeholder="(00) 00000-0000" />
+              <InputGroup label="Tempo de Conversão" name="conversionTime" value={formData.conversionTime} onChange={handleChange} placeholder="Ex: 5 anos" />
+              
+              <div className="flex items-center gap-6 p-4 bg-slate-950/50 rounded-xl border border-slate-800">
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" name="baptized" checked={formData.baptized} onChange={handleChange} className="w-5 h-5 accent-red-600" />
+                  <label className="text-xs font-bold uppercase text-slate-400">Batizado(a)</label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" name="baptizedInHolySpirit" checked={formData.baptizedInHolySpirit} onChange={handleChange} className="w-5 h-5 accent-red-600" />
+                  <label className="text-xs font-bold uppercase text-slate-400">Batismo no ES</label>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 p-4 bg-slate-950/50 rounded-xl border border-slate-800">
+                <input type="checkbox" name="pastoralRecommendation" checked={formData.pastoralRecommendation} onChange={handleChange} className="w-5 h-5 accent-red-600" />
+                <label className="text-xs font-bold uppercase text-slate-400">Tenho recomendação pastoral</label>
+              </div>
+
+              <div className="md:col-span-2">
+                <InputGroup label="Ministério Atual" name="currentMinistry" value={formData.currentMinistry} onChange={handleChange} placeholder="O que você faz hoje na igreja?" isTextArea />
+              </div>
+              <div className="md:col-span-2">
+                <InputGroup label="Gaps e Dons Espirituais" name="spiritualGifts" value={formData.spiritualGifts} onChange={handleChange} placeholder="Como Deus costuma te usar?" isTextArea />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step === 4 && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-right-4">
+            <header>
+              <h2 className="text-3xl font-black uppercase tracking-tighter flex items-center gap-3">
+                <div className="p-2 bg-red-700 rounded-lg"><Activity size={24} /></div>
+                Ficha de Saúde
+              </h2>
+              <p className="text-slate-500 text-sm mt-2 font-medium">Dados médicos cruciais para sua segurança em campo.</p>
+            </header>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <InputGroup label="Contato de Emergência" name="emergencyContact" value={formData.emergencyContact} onChange={handleChange} placeholder="Nome de um familiar/amigo" />
+              <InputGroup label="Telefone de Emergência" name="emergencyPhone" value={formData.emergencyPhone} onChange={handleChange} placeholder="(00) 00000-0000" icon={<Smartphone size={14} />} />
+              
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Tipo Sanguíneo</label>
+                <select name="bloodType" value={formData.bloodType} onChange={handleChange} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 outline-none focus:ring-2 ring-red-500/50 appearance-none text-slate-300">
+                  <option value="">Selecione...</option>
+                  {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2 p-4 bg-slate-950/50 rounded-xl border border-slate-800">
+                <input type="checkbox" name="hasPhysicalConstraint" checked={formData.hasPhysicalConstraint} onChange={handleChange} className="w-5 h-5 accent-red-600" />
+                <label className="text-xs font-bold uppercase text-slate-400">Tenho restrição física/limitação</label>
+              </div>
+
+              <div className="md:col-span-2">
+                <InputGroup label="Alergias Conocidas" name="allergies" value={formData.allergies} onChange={handleChange} placeholder="Medicamentos, alimentos, etc." isTextArea />
+              </div>
+              <div className="md:col-span-2">
+                <InputGroup label="Condições ou Patologias" name="healthConditions" value={formData.healthConditions} onChange={handleChange} placeholder="Asma, diabetes, pressão alta, etc." isTextArea />
+              </div>
+              <div className="md:col-span-2">
+                <InputGroup label="Medicamentos de Uso Contínuo" name="medications" value={formData.medications} onChange={handleChange} placeholder="Quais remédios você traz consigo?" isTextArea />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step === 5 && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-right-4">
+            <header>
+              <h2 className="text-3xl font-black uppercase tracking-tighter flex items-center gap-3">
+                <div className="p-2 bg-red-700 rounded-lg"><ShieldCheck size={24} /></div>
+                Termo de Protocolo
+              </h2>
+              <p className="text-slate-500 text-sm mt-2 font-medium">Leia atentamente e valide via contrato inteligente de IA.</p>
+            </header>
+
+            <div className="bg-slate-950 border border-slate-800 rounded-3xl p-6 md:p-10 shadow-inner max-h-[400px] overflow-y-auto custom-scrollbar prose prose-invert prose-sm">
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-4 text-slate-500">
+                  <Loader2 className="animate-spin" size={40} />
+                  <p className="font-mono text-[10px] uppercase tracking-widest text-center">IA Jurídica analisando seus dados e gerando termo personalizado...</p>
+                </div>
+              ) : (
+                <div className="font-mono text-[13px] leading-relaxed text-slate-400 whitespace-pre-wrap">
+                  {consentTerm || "Ocorreu um erro ao gerar o termo. Por favor, volte e verifique seus dados médicos."}
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <button 
+                onClick={downloadPDF} 
+                disabled={!consentTerm}
+                className="flex items-center justify-center gap-3 p-4 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
+              >
+                <FileDown size={20} /> Baixar Cópia em PDF
+              </button>
+
+              <div className="p-6 bg-red-900/10 border border-red-900/40 rounded-3xl flex items-start gap-4">
+                <input 
+                  type="checkbox" 
+                  name="agreedToTerms" 
+                  id="agreed"
+                  checked={formData.agreedToTerms} 
+                  onChange={handleChange} 
+                  className="w-6 h-6 mt-1 accent-red-600 rounded-lg cursor-pointer"
+                />
+                <label htmlFor="agreed" className="text-xs font-bold text-slate-300 cursor-pointer leading-tight">
+                  Eu li, entendo os riscos descritos (incluindo privação de sono, estresse e desafios físicos) e aceito integralmente os termos do Chamado UOU Movement sob as leis da LGPD.
+                </label>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step === 6 && (
+          <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4">
+            <header className="text-center">
+              <div className="w-20 h-20 bg-emerald-500/10 text-emerald-500 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-emerald-500/20">
+                <CheckCircle size={40} />
+              </div>
+              <h2 className="text-3xl font-black uppercase tracking-tighter">Inscrição Validada</h2>
+              <p className="text-slate-500 text-sm mt-3 font-medium max-w-sm mx-auto">
+                Seu registro foi processado e está sob análise tática. Para confirmar seu lugar garantido no campo, agora escolha o método de logística financeira.
+              </p>
+            </header>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <button
+                onClick={() => handlePayment('PIX')}
+                className={`p-10 border-2 rounded-[2.5rem] transition-all flex flex-col items-center gap-6 group relative overflow-hidden ${
+                  paymentMethod === 'PIX' ? 'bg-red-700 border-red-700 text-white' : 'bg-slate-950 border-slate-800 hover:border-red-700/50'
+                }`}
+              >
+                <div className={`p-4 rounded-2xl transition-colors ${paymentMethod === 'PIX' ? 'bg-white text-red-700' : 'bg-red-700/10 text-red-500'}`}>
+                  <QrCode size={32} />
+                </div>
+                <div className="text-center">
+                  <h4 className="font-black uppercase tracking-tighter text-xl">PIX Direto</h4>
+                  <p className={`text-[10px] uppercase font-bold tracking-widest mt-1 ${paymentMethod === 'PIX' ? 'text-white/70' : 'text-slate-500'}`}>
+                    Liberação Imediata
+                  </p>
+                </div>
+                {paymentMethod === 'PIX' && isProcessingPayment && (
+                  <div className="absolute inset-0 bg-red-700/95 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
+                    <Loader2 className="animate-spin" size={32} />
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em]">Gerando QR Code...</span>
+                  </div>
+                )}
+              </button>
+
+              <button
+                onClick={() => handlePayment('CARD')}
+                className={`p-10 border-2 rounded-[2.5rem] transition-all flex flex-col items-center gap-6 group relative overflow-hidden ${
+                  paymentMethod === 'CARD' ? 'bg-red-700 border-red-700 text-white' : 'bg-slate-950 border-slate-800 hover:border-red-700/50'
+                }`}
+              >
+                <div className={`p-4 rounded-2xl transition-colors ${paymentMethod === 'CARD' ? 'bg-white text-red-700' : 'bg-slate-800 text-slate-500'}`}>
+                  <CreditCard size={32} />
+                </div>
+                <div className="text-center">
+                  <h4 className="font-black uppercase tracking-tighter text-xl">Cartão de Crédito</h4>
+                  <p className={`text-[10px] uppercase font-bold tracking-widest mt-1 ${paymentMethod === 'CARD' ? 'text-white/70' : 'text-slate-500'}`}>
+                    Até 12x no Checkout
+                  </p>
+                </div>
+                {paymentMethod === 'CARD' && isProcessingPayment && (
+                  <div className="absolute inset-0 bg-red-700/95 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
+                    <Loader2 className="animate-spin" size={32} />
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em]">Redirecionando...</span>
+                  </div>
+                )}
+              </button>
+            </div>
+
+            <div className="flex flex-col items-center gap-4">
+              <button
+                disabled={!paymentMethod || isProcessingPayment}
+                onClick={() => onComplete(paymentMethod!)}
+                className="w-full md:w-auto px-20 py-6 bg-red-700 hover:bg-red-600 disabled:opacity-20 text-white rounded-2xl font-black uppercase tracking-widest transition-all shadow-2xl flex items-center justify-center gap-4 text-sm group"
+              >
+                {paymentMethod ? 'Avançar com Pagamento' : 'Selecione o Método'}
+                <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />
+              </button>
+              <div className="flex items-center gap-2 text-slate-600">
+                <ShieldCheck size={16} />
+                <span className="text-[9px] uppercase font-black tracking-widest">Transação Criptografada SSL</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="mt-16 flex justify-between items-center border-t border-slate-800 pt-10">
           {step > 1 && step < 6 && (

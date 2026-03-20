@@ -13,7 +13,8 @@ import {
   ShieldAlert,
   Menu,
   X,
-  RefreshCw
+  RefreshCw,
+  Lock
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -35,26 +36,33 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeView, onViewChange, onLog
     { id: 'REPORTS', icon: BarChart3, label: 'Relatórios' },
   ] : [
     { id: 'DASHBOARD', icon: LayoutDashboard, label: 'Minha Jornada' },
-    { id: 'ENROLLMENT', icon: ClipboardCheck, label: 'Inscrição' },
-    { id: 'MISSION_INFO', icon: Target, label: 'Sobre a Missão' },
-    { id: 'PAYMENT_HISTORY', icon: CreditCard, label: 'Pagamentos' },
+    { id: 'ENROLLMENT', icon: ClipboardCheck, label: 'Inscrição', locked: !user.briefingCompleted },
+    { id: 'MISSION_INFO', icon: Target, label: 'Sobre a Missão', locked: !user.briefingCompleted },
+    { id: 'PAYMENT_HISTORY', icon: CreditCard, label: 'Pagamentos', locked: !user.briefingCompleted },
   ];
 
   // Fix: Explicitly type NavItem as React.FC to allow React-specific props like 'key' when used in JSX maps
   const NavItem: React.FC<{ item: any }> = ({ item }) => (
     <button
+      disabled={item.locked}
       onClick={() => {
+        if (item.locked) return;
         onViewChange(item.id);
         setIsOpen(false);
       }}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-        activeView === item.id 
+      className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 ${
+        item.locked 
+          ? 'opacity-40 cursor-not-allowed grayscale' 
+          : activeView === item.id 
           ? 'bg-red-900/20 text-red-500 border border-red-900/30 shadow-inner' 
           : 'text-slate-400 hover:text-white hover:bg-slate-800'
       }`}
     >
-      <item.icon size={20} />
-      <span className="font-medium">{item.label}</span>
+      <div className="flex items-center gap-3">
+        <item.icon size={20} />
+        <span className="font-medium">{item.label}</span>
+      </div>
+      {item.locked && <Lock size={14} className="text-slate-600" />}
     </button>
   );
 

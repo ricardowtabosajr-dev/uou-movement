@@ -27,6 +27,7 @@ export interface UserProfile {
   paymentStatus?: PaymentStatus;
   missionId?: string;
   avatarUrl?: string;
+  briefingCompleted?: boolean;
 }
 
 export interface Mission {

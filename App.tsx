@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { UserRole, UserProfile, EnrollmentStatus, PaymentStatus } from './types';
+import { supabase } from './services/supabase';
+import { getProfile, updateProfile, getAllProfiles, signOut, onAuthStateChange } from './services/auth';
 import Sidebar from './components/Sidebar';
 import AdminDashboard from './components/AdminDashboard';
 import UserDashboard from './components/UserDashboard';
@@ -16,57 +18,106 @@ type AppView = 'DASHBOARD' | 'ENROLLMENT' | 'USERS' | 'MISSIONS' | 'PAYMENTS' | 
 
 const App: React.FC = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [enrollments, setEnrollments] = useState<UserProfile[]>(() => {
-    const saved = localStorage.getItem('uou_enrollments');
-    if (saved) return JSON.parse(saved);
-    return [
-      { id: '101', name: 'Lucas Silva', email: 'lucas@missao.com', role: UserRole.USER, enrollmentStatus: EnrollmentStatus.APPROVED, paymentStatus: PaymentStatus.PAID, avatarUrl: 'https://picsum.photos/seed/101/40/40' },
-      { id: '102', name: 'Ana Costa', email: 'ana@missao.com', role: UserRole.USER, enrollmentStatus: EnrollmentStatus.REVIEWING, paymentStatus: PaymentStatus.PENDING, avatarUrl: 'https://picsum.photos/seed/102/40/40' },
-      { id: '103', name: 'Pedro Santos', email: 'pedro@missao.com', role: UserRole.USER, enrollmentStatus: EnrollmentStatus.PENDING, paymentStatus: PaymentStatus.UNPAID, avatarUrl: 'https://picsum.photos/seed/103/40/40' },
-    ];
-  });
-
+  const [enrollments, setEnrollments] = useState<UserProfile[]>([]);
   const [view, setView] = useState<AppView>('DASHBOARD');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [showApp, setShowApp] = useState(false);
   const [authModal, setAuthModal] = useState<{ open: boolean, mode: 'LOGIN' | 'SIGNUP' }>({ open: false, mode: 'LOGIN' });
 
+  // Verificar sessão existente ao carregar
   useEffect(() => {
-    localStorage.setItem('uou_enrollments', JSON.stringify(enrollments));
-  }, [enrollments]);
+    const initSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          const profile = await getProfile(session.user.id);
+          if (profile) {
+            setUser(profile);
+            setShowApp(true);
+          }
+        }
+      } catch (err) {
+        console.error('Erro ao restaurar sessão:', err);
+      }
+      setLoading(false);
+    };
 
-  const handleLogout = () => {
+    initSession();
+
+    // Escutar mudanças de autenticação
+    const { data: { subscription } } = onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setShowApp(false);
+        setView('DASHBOARD');
+      } else if (event === 'SIGNED_IN' && session?.user) {
+        const profile = await getProfile(session.user.id);
+        if (profile) {
+          setUser(profile);
+          setShowApp(true);
+        }
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  // Carregar lista de inscrições (para admin)
+  useEffect(() => {
+    if (user?.role === UserRole.ADMIN) {
+      loadEnrollments();
+    }
+  }, [user?.role]);
+
+  const loadEnrollments = async () => {
+    const profiles = await getAllProfiles();
+    setEnrollments(profiles.filter(p => p.role === UserRole.USER));
+  };
+
+  const handleLogout = async () => {
+    await signOut();
     setUser(null);
     setShowApp(false);
     setView('DASHBOARD');
   };
 
   const handleAuthSuccess = (authenticatedUser: UserProfile) => {
-    setLoading(true);
-    setTimeout(() => {
-      setUser(authenticatedUser);
-      setShowApp(true);
-      setLoading(false);
-    }, 800);
+    setUser(authenticatedUser);
+    setShowApp(true);
+    setAuthModal({ ...authModal, open: false });
   };
 
-  const handleEnrollmentComplete = (paymentMethod: string) => {
+  const handleEnrollmentComplete = async (paymentMethod: string) => {
     if (!user) return;
+
+    await updateProfile(user.id, {
+      enrollmentStatus: EnrollmentStatus.REVIEWING,
+      paymentStatus: PaymentStatus.PAID,
+    });
+
     const updatedUser: UserProfile = {
       ...user,
       enrollmentStatus: EnrollmentStatus.REVIEWING,
-      paymentStatus: PaymentStatus.PAID 
+      paymentStatus: PaymentStatus.PAID,
     };
     setUser(updatedUser);
+
+    // Atualizar a lista de enrollments para admins
     setEnrollments(prev => {
       const exists = prev.find(e => e.id === updatedUser.id);
       if (exists) return prev.map(e => e.id === updatedUser.id ? updatedUser : e);
       return [updatedUser, ...prev];
     });
+
     setView('DASHBOARD');
   };
 
-  const updateEnrollmentStatus = (userId: string, status: EnrollmentStatus) => {
+  const updateEnrollmentStatus = async (userId: string, status: EnrollmentStatus) => {
+    await updateProfile(userId, { enrollmentStatus: status });
+
     setEnrollments(prev => prev.map(e => e.id === userId ? { ...e, enrollmentStatus: status } : e));
     if (user?.id === userId) setUser({ ...user, enrollmentStatus: status });
   };
@@ -99,13 +150,26 @@ const App: React.FC = () => {
     );
   }
 
+  const handleBriefingComplete = async () => {
+    if (!user) return;
+    
+    await updateProfile(user.id, { briefingCompleted: true });
+
+    const updatedUser = { ...user, briefingCompleted: true };
+    setUser(updatedUser);
+  };
+
   const renderContent = () => {
     switch (view) {
       case 'DASHBOARD':
         return user?.role === UserRole.ADMIN ? (
           <AdminDashboard enrollments={enrollments} />
         ) : (
-          <UserDashboard user={user!} onStartEnrollment={() => setView('ENROLLMENT')} />
+          <UserDashboard 
+            user={user!} 
+            onStartEnrollment={() => setView('ENROLLMENT')} 
+            onCompleteBriefing={handleBriefingComplete}
+          />
         );
       case 'ENROLLMENT':
         return <EnrollmentForm user={user!} onComplete={handleEnrollmentComplete} />;
@@ -124,7 +188,7 @@ const App: React.FC = () => {
       case 'REPORTS':
         return <ReportsView enrollments={enrollments} />;
       case 'MISSION_INFO':
-        return <UserDashboard user={user!} onStartEnrollment={() => setView('ENROLLMENT')} />;
+        return <UserDashboard user={user!} onStartEnrollment={() => setView('ENROLLMENT')} onCompleteBriefing={handleBriefingComplete} />;
       case 'PAYMENT_HISTORY':
         return <PaymentsManagement enrollments={enrollments.filter(e => e.id === user?.id)} isUserMode={true} />;
       default:
@@ -153,7 +217,7 @@ const App: React.FC = () => {
         activeView={view} 
         onViewChange={(v) => setView(v as AppView)} 
         onLogout={handleLogout}
-        onToggleRole={() => {}} // Desativado para forçar login real
+        onToggleRole={() => {}}
       />
       
       <main className="flex-1 overflow-y-auto p-4 md:p-8">
@@ -161,7 +225,7 @@ const App: React.FC = () => {
           <div>
             <h2 className="text-3xl font-black tracking-tighter uppercase">{getViewTitle()}</h2>
             <p className="text-slate-500 font-mono text-[10px] md:text-xs uppercase">
-              RECRUTA: {user?.name.toUpperCase()} • ID: {user?.id.toUpperCase()}
+              RECRUTA: {user?.name.toUpperCase()} • ID: {user?.id.substring(0, 8).toUpperCase()}
             </p>
           </div>
           <div className="flex items-center gap-4 bg-slate-900 px-4 py-2 rounded-lg border border-slate-800 shadow-xl shadow-black/20">

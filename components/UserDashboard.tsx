@@ -22,11 +22,12 @@ import {
 interface UserDashboardProps {
   user: UserProfile;
   onStartEnrollment: () => void;
+  onCompleteBriefing: () => void;
 }
 
-const UserDashboard: React.FC<UserDashboardProps> = ({ user, onStartEnrollment }) => {
+const UserDashboard: React.FC<UserDashboardProps> = ({ user, onStartEnrollment, onCompleteBriefing }) => {
   const [showBriefing, setShowBriefing] = useState(false);
-  const [briefingCompleted, setBriefingCompleted] = useState(false);
+  const [briefingCompleted, setBriefingCompleted] = useState(user.briefingCompleted || false);
   const [videoProgress, setVideoProgress] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const lastTimeRef = useRef(0);
@@ -49,29 +50,17 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ user, onStartEnrollment }
     if (!videoRef.current) return;
     const video = videoRef.current;
 
-    // Protocolo de segurança: impede saltos para frente
-    if (video.currentTime > lastTimeRef.current + 2) {
-      video.currentTime = lastTimeRef.current;
-    } else {
-      lastTimeRef.current = video.currentTime;
-    }
-
-    // Cálculo de progresso com validação de duração
+    // Atualiza apenas a barra de progresso visual
     if (video.duration) {
       const progress = (video.currentTime / video.duration) * 100;
       setVideoProgress(progress);
-
-      // Fallback: libera o briefing quando atinge 95% do vídeo
-      // Isso resolve problemas com vídeos do WhatsApp que nem sempre disparam onEnded
-      if (progress >= 95 && !briefingCompleted) {
-        setBriefingCompleted(true);
-      }
     }
   };
 
   const handleVideoEnd = () => {
     setBriefingCompleted(true);
     setVideoProgress(100);
+    onCompleteBriefing();
   };
 
   const getStatusDisplay = () => {
@@ -102,66 +91,63 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ user, onStartEnrollment }
     <div className="space-y-8 animate-in fade-in duration-500">
       {showBriefing && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-xl">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-4xl rounded-[2.5rem] overflow-hidden shadow-2xl animate-in zoom-in duration-300 flex flex-col">
-            <div className="p-6 md:p-8 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+          <div className="bg-slate-900 border border-slate-800 w-full max-w-4xl rounded-[2rem] overflow-hidden shadow-2xl animate-in zoom-in duration-300 flex flex-col">
+            {/* Header */}
+            <div className="p-4 md:p-5 border-b border-slate-800 flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-red-700 rounded-xl text-white animate-pulse">
-                  <ShieldAlert size={24} />
+                  <ShieldAlert size={20} />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black uppercase tracking-tighter">Briefing Obrigatório</h3>
-                  <p className="text-[10px] font-black text-red-500 uppercase tracking-widest">Protocolo: Realidade da Igreja Perseguida</p>
+                  <h3 className="text-base font-black uppercase tracking-tighter text-white">Briefing Obrigatório</h3>
+                  <p className="text-[9px] font-black text-red-500 uppercase tracking-widest">Protocolo: Realidade da Igreja Perseguida</p>
                 </div>
               </div>
               {!briefingCompleted && (
-                <div className="flex items-center gap-2 text-slate-500 font-mono text-xs uppercase tracking-widest">
-                  <Lock size={14} /> Bloqueio de Avanço Ativo
+                <div className="flex items-center gap-2 text-slate-500 font-mono text-[10px] uppercase tracking-widest">
+                  <Lock size={12} /> Bloqueio Ativo
                 </div>
               )}
             </div>
 
-            <div className="relative aspect-video bg-black flex items-center justify-center group">
+            {/* Vídeo */}
+            <div className="relative bg-black" style={{ height: '60vh' }}>
               <video
                 ref={videoRef}
-                className="w-full h-full object-contain"
+                className="w-full h-full object-cover"
                 onTimeUpdate={handleTimeUpdate}
                 onEnded={handleVideoEnd}
                 autoPlay
                 playsInline
                 controls={false}
                 disablePictureInPicture
+                preload="auto"
               >
-                {/* VÍDEO DE EXEMPLO - SUBSTITUA POR UM VÍDEO COMPATÍVEL */}
-                <source src="https://vjs.zencdn.net/v/oceans.mp4" type="video/mp4" />
+                <source src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/videos/briefing.mp4`} type="video/mp4" />
                 Seu navegador não suporta vídeos.
               </video>
-              <div className="absolute inset-0 z-10 pointer-events-none"></div>
-              <div className="absolute bottom-0 left-0 w-full h-2 bg-slate-800/50">
-                <div className="h-full bg-red-600 transition-all duration-300 shadow-[0_0_10px_rgba(220,38,38,0.5)]" style={{ width: `${videoProgress}%` }}></div>
+              {/* Barra de progresso */}
+              <div className="absolute bottom-0 left-0 w-full h-1.5 bg-black/50 z-20">
+                <div className="h-full bg-red-600 transition-all duration-500" style={{ width: `${videoProgress}%` }}></div>
               </div>
             </div>
 
-            <div className="p-8 bg-slate-900 flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="max-w-md">
-                <h4 className="font-bold text-slate-200 mb-2 flex items-center gap-2 uppercase tracking-tight">
-                  {briefingCompleted ? <CheckCircle2 className="text-emerald-500" /> : <Eye className="text-red-500" />}
+            {/* Footer */}
+            <div className="p-4 md:p-5 bg-slate-900 border-t border-slate-800 flex items-center justify-between gap-4">
+              <div>
+                <h4 className="font-bold text-slate-200 flex items-center gap-2 uppercase tracking-tight text-xs">
+                  {briefingCompleted ? <CheckCircle2 className="text-emerald-500" size={16} /> : <Eye className="text-red-500" size={16} />}
                   {briefingCompleted ? 'Briefing Concluído' : 'Visualização Obrigatória'}
                 </h4>
-                <p className="text-xs text-slate-500 leading-relaxed font-medium">
-                  Este vídeo apresenta a realidade daqueles que servimos. Adoração, Oração e Perdão são os pilares da nossa missão. Entenda o custo antes de responder ao Chamado.
+                <p className="text-[10px] text-slate-500 font-medium mt-0.5">
+                  Adoração, Oração e Perdão são os pilares da nossa missão.
                 </p>
               </div>
 
-              {briefingCompleted ? (
-                <button onClick={() => { setShowBriefing(false); onStartEnrollment(); }} className="w-full md:w-auto px-10 py-5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-widest transition-all shadow-xl animate-bounce">
-                  Iniciar Inscrição <ArrowRight className="inline ml-2" />
+              {briefingCompleted && (
+                <button onClick={() => { setShowBriefing(false); onStartEnrollment(); }} className="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-widest transition-all shadow-xl animate-bounce whitespace-nowrap text-sm">
+                  Iniciar Inscrição <ArrowRight className="inline ml-2" size={18} />
                 </button>
-              ) : (
-                <div className="flex flex-col items-center gap-2">
-                  <div className="flex items-center gap-3 px-6 py-4 bg-slate-800 rounded-xl text-slate-400 font-black uppercase text-xs">
-                    <Loader2 className="animate-spin" size={18} /> Assistindo...
-                  </div>
-                </div>
               )}
             </div>
           </div>

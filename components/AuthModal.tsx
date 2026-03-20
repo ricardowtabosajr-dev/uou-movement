@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
-import { ShieldAlert, Mail, Lock, User, ArrowRight, X } from 'lucide-react';
-import { UserRole, UserProfile, EnrollmentStatus, PaymentStatus } from '../types';
+import { ShieldAlert, Mail, Lock, User, ArrowRight, X, AlertCircle } from 'lucide-react';
+import { UserProfile } from '../types';
+import { signIn, signUp } from '../services/auth';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -16,48 +17,69 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess, i
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    setSuccessMessage(null);
     setLoading(true);
 
     if (!email || !password || (mode === 'SIGNUP' && !name)) {
-      alert("Por favor, preencha todos os campos táticos.");
+      setError("Por favor, preencha todos os campos táticos.");
       setLoading(false);
       return;
     }
 
     if (!email.includes('@')) {
-      alert("Email operacional inválido.");
+      setError("Email operacional inválido.");
       setLoading(false);
       return;
     }
 
-    // Simulando processamento de autenticação/criação de conta
-    setTimeout(() => {
-      const mockUser: UserProfile = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: mode === 'SIGNUP' ? name : 'Usuário Recrutado',
-        email: email,
-        role: email.toLowerCase().includes('admin') ? UserRole.ADMIN : UserRole.USER,
-        enrollmentStatus: EnrollmentStatus.PENDING,
-        paymentStatus: PaymentStatus.UNPAID,
-        avatarUrl: `https://picsum.photos/seed/${email}/100/100`
-      };
-
-      // Salvar no localStorage para simular persistência individual
-      const savedUsers = JSON.parse(localStorage.getItem('uou_users') || '[]');
-      if (mode === 'SIGNUP') {
-        savedUsers.push(mockUser);
-        localStorage.setItem('uou_users', JSON.stringify(savedUsers));
-      }
-
-      onAuthSuccess(mockUser);
+    if (password.length < 6) {
+      setError("O código de acesso deve ter pelo menos 6 caracteres.");
       setLoading(false);
-      onClose();
-    }, 1500);
+      return;
+    }
+
+    try {
+      if (mode === 'SIGNUP') {
+        const result = await signUp(email, password, name);
+        if (result.error) {
+          setError(result.error);
+          setLoading(false);
+          return;
+        }
+        if (result.user) {
+          setSuccessMessage('Cadastro realizado! Verifique seu email para confirmar o acesso.');
+          // Tentar fazer login automaticamente (caso email confirmation esteja desabilitado)
+          const loginResult = await signIn(email, password);
+          if (loginResult.user) {
+            onAuthSuccess(loginResult.user);
+            onClose();
+          }
+        }
+      } else {
+        const result = await signIn(email, password);
+        if (result.error) {
+          setError(result.error);
+          setLoading(false);
+          return;
+        }
+        if (result.user) {
+          onAuthSuccess(result.user);
+          onClose();
+        }
+      }
+    } catch (err: any) {
+      setError('Erro de conexão. Tente novamente.');
+    }
+
+    setLoading(false);
   };
 
   return (
@@ -79,6 +101,21 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess, i
               {mode === 'LOGIN' ? 'Insira suas credenciais táticas.' : 'Inicie sua jornada no UOU MOVEMENT.'}
             </p>
           </div>
+
+          {/* Mensagem de Erro */}
+          {error && (
+            <div className="mb-4 p-3 bg-red-950/50 border border-red-900/30 rounded-xl flex items-center gap-3 animate-in fade-in duration-300">
+              <AlertCircle size={18} className="text-red-500 shrink-0" />
+              <p className="text-sm text-red-400">{error}</p>
+            </div>
+          )}
+
+          {/* Mensagem de Sucesso */}
+          {successMessage && (
+            <div className="mb-4 p-3 bg-emerald-950/50 border border-emerald-900/30 rounded-xl animate-in fade-in duration-300">
+              <p className="text-sm text-emerald-400">{successMessage}</p>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === 'SIGNUP' && (
@@ -110,7 +147,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess, i
               <input
                 type="password"
                 required
-                placeholder="Código de Acesso (Senha)"
+                minLength={6}
+                placeholder="Código de Acesso (mín. 6 caracteres)"
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-12 pr-4 py-4 outline-none focus:ring-2 ring-red-500/50 text-sm font-medium"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -131,7 +169,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess, i
 
           <div className="mt-8 pt-8 border-t border-slate-800 text-center">
             <button
-              onClick={() => setMode(mode === 'LOGIN' ? 'SIGNUP' : 'LOGIN')}
+              onClick={() => { setMode(mode === 'LOGIN' ? 'SIGNUP' : 'LOGIN'); setError(null); setSuccessMessage(null); }}
               className="text-sm font-bold text-slate-400 hover:text-red-500 transition-colors"
             >
               {mode === 'LOGIN' ? 'Não tem acesso? Cadastre-se aqui' : 'Já possui cadastro? Faça Login'}
