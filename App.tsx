@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { UserRole, UserProfile, EnrollmentStatus, PaymentStatus } from './types';
+import { UserRole, UserProfile, EnrollmentStatus, PaymentStatus, EnrollmentData } from './types';
 import { supabase } from './services/supabase';
 import { getProfile, updateProfile, getAllProfiles, signOut, onAuthStateChange } from './services/auth';
+import { saveEnrollment, createPayment, uploadIdentityVideo } from './services/database';
 import Sidebar from './components/Sidebar';
 import AdminDashboard from './components/AdminDashboard';
 import UserDashboard from './components/UserDashboard';
@@ -90,28 +91,61 @@ const App: React.FC = () => {
     setAuthModal({ ...authModal, open: false });
   };
 
-  const handleEnrollmentComplete = async (paymentMethod: string) => {
+  const handleEnrollmentComplete = async (data: EnrollmentData, paymentMethod: string, videoBlob: Blob) => {
     if (!user) return;
 
-    await updateProfile(user.id, {
-      enrollmentStatus: EnrollmentStatus.REVIEWING,
-      paymentStatus: PaymentStatus.PAID,
+    setLoading(true);
+    
+    // 1. Salvar os dados detalhados da inscrição
+    const enrollResult = await saveEnrollment(user.id, data);
+    if (!enrollResult.success) {
+      alert(`Erro ao salvar inscrição: ${enrollResult.error}`);
+      setLoading(false);
+      return;
+    }
+
+    // 2. Fazer upload do vídeo de identidade
+    const videoResult = await uploadIdentityVideo(user.id, videoBlob);
+    if (!videoResult.success) {
+      console.error('Erro no upload do vídeo:', videoResult.error);
+      // Continua mesmo se o vídeo falhar, para não travar o fluxo principal
+    }
+
+    // 3. Registrar o pagamento (como PENDING para PIX ou PAID para simulação)
+    await createPayment({
+      user_id: user.id,
+      amount: 1200.00, // Valor exemplo da inscrição
+      method: paymentMethod,
+      status: paymentMethod === 'PIX' ? 'PENDING' : 'PAID'
     });
 
+    // 4. Atualizar o status do perfil no banco
+    await updateProfile(user.id, {
+      enrollmentStatus: EnrollmentStatus.REVIEWING,
+      paymentStatus: paymentMethod === 'PIX' ? PaymentStatus.PENDING : PaymentStatus.PAID,
+    });
+
+    // 5. Atualizar o estado local
     const updatedUser: UserProfile = {
       ...user,
       enrollmentStatus: EnrollmentStatus.REVIEWING,
-      paymentStatus: PaymentStatus.PAID,
+      paymentStatus: paymentMethod === 'PIX' ? PaymentStatus.PENDING : PaymentStatus.PAID,
     };
     setUser(updatedUser);
 
-    // Atualizar a lista de enrollments para admins
-    setEnrollments(prev => {
-      const exists = prev.find(e => e.id === updatedUser.id);
-      if (exists) return prev.map(e => e.id === updatedUser.id ? updatedUser : e);
-      return [updatedUser, ...prev];
-    });
+    // 6. Sincronizar lista de inscritos para admins
+    if (user.role === UserRole.ADMIN) {
+      const allProfiles = await getAllProfiles();
+      setEnrollments(allProfiles);
+    } else {
+      setEnrollments(prev => {
+        const exists = prev.find(e => e.id === updatedUser.id);
+        if (exists) return prev.map(e => e.id === updatedUser.id ? updatedUser : e);
+        return [updatedUser, ...prev];
+      });
+    }
 
+    setLoading(false);
     setView('DASHBOARD');
   };
 

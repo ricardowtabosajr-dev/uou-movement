@@ -196,3 +196,28 @@ export const getAllPayments = async (): Promise<PaymentDB[]> => {
   if (error || !data) return [];
   return data;
 };
+
+/**
+ * Faz upload do vídeo de identificação para o storage.
+ */
+export const uploadIdentityVideo = async (
+  userId: string,
+  videoBlob: Blob
+): Promise<{ success: boolean; error: string | null }> => {
+  const fileName = `${userId}/identity_v1.mp4`;
+  
+  const { error } = await supabase.storage
+    .from('identities')
+    .upload(fileName, videoBlob, {
+      contentType: 'video/mp4',
+      cacheControl: '3600',
+      upsert: true
+    });
+
+  if (error) {
+    console.error('Erro no upload do vídeo:', error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true, error: null };
+};

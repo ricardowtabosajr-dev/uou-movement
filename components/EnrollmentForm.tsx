@@ -39,7 +39,7 @@ import { jsPDF } from 'jspdf';
 
 interface EnrollmentFormProps {
   user: UserProfile;
-  onComplete: (paymentMethod: string) => void;
+  onComplete: (data: EnrollmentData, paymentMethod: string, videoBlob: Blob) => void;
 }
 
 const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => {
@@ -640,7 +640,7 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
             <div className="flex flex-col items-center gap-4">
               <button
                 disabled={!paymentMethod || isProcessingPayment}
-                onClick={() => onComplete(paymentMethod!)}
+                onClick={() => onComplete(formData, paymentMethod!, videoBlob!)}
                 className="w-full md:w-auto px-20 py-6 bg-red-700 hover:bg-red-600 disabled:opacity-20 text-white rounded-2xl font-black uppercase tracking-widest transition-all shadow-2xl flex items-center justify-center gap-4 text-sm group"
               >
                 {paymentMethod ? 'Avançar com Pagamento' : 'Selecione o Método'}
