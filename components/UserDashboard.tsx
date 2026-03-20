@@ -123,7 +123,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ user, onStartEnrollment, 
                 disablePictureInPicture
                 preload="auto"
               >
-                <source src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/videos/briefing.mp4`} type="video/mp4" />
+                <source src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/videos/202603191547.mp4`} type="video/mp4" />
                 Seu navegador não suporta vídeos.
               </video>
               {/* Barra de progresso */}
