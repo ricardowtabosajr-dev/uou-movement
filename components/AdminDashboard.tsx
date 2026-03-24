@@ -1,10 +1,9 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area 
 } from 'recharts';
 import { Users, Target, TrendingUp, AlertCircle, Sparkles, ChevronRight } from 'lucide-react';
-import { getAdminInsights } from '../services/gemini';
 import { UserProfile, EnrollmentStatus, PaymentStatus } from '../types';
 
 const data = [
@@ -22,23 +21,6 @@ interface AdminDashboardProps {
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ enrollments = [] }) => {
-  const [insights, setInsights] = useState<string>('Analisando inteligência do campo...');
-  const [loadingInsights, setLoadingInsights] = useState(true);
-
-  useEffect(() => {
-    const fetchInsights = async () => {
-      const stats = {
-        totalInscritos: 450 + enrollments.length,
-        totalPagos: 320 + enrollments.filter(e => e.paymentStatus === PaymentStatus.PAID).length,
-        metaMissao: 500
-      };
-      const res = await getAdminInsights(stats);
-      setInsights(res);
-      setLoadingInsights(false);
-    };
-    fetchInsights();
-  }, [enrollments]);
-
   const stats = [
     { label: 'Total Inscritos', value: (450 + enrollments.length).toString(), icon: Users, color: 'blue', change: '+12%' },
     { label: 'Missões Ativas', value: '08', icon: Target, color: 'red', change: 'Estável' },
@@ -163,27 +145,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ enrollments = [] }) => 
           </div>
         </div>
 
-        {/* Sidebar Insights */}
+        {/* Sidebar Status */}
         <div className="space-y-6">
-          <div className="bg-gradient-to-br from-red-950/40 to-slate-900 border border-red-900/30 p-6 rounded-xl">
-             <div className="flex items-center gap-2 mb-4 text-red-500">
-                <Sparkles size={20} />
-                <h3 className="font-bold">AI Insights Estratégicos</h3>
-             </div>
-             <div className="text-sm text-slate-300 leading-relaxed whitespace-pre-line">
-                {loadingInsights ? (
-                  <div className="space-y-3">
-                    <div className="h-4 bg-slate-800 rounded w-full animate-pulse"></div>
-                    <div className="h-4 bg-slate-800 rounded w-5/6 animate-pulse"></div>
-                    <div className="h-4 bg-slate-800 rounded w-full animate-pulse"></div>
-                  </div>
-                ) : insights}
-             </div>
-             <button className="mt-6 w-full py-2 bg-red-700 hover:bg-red-600 rounded-lg text-sm font-bold transition-colors">
-               Gerar Relatório Completo
-             </button>
-          </div>
-
           <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl">
              <h3 className="font-bold mb-4">Metas do Trimestre</h3>
              <div className="space-y-4">
