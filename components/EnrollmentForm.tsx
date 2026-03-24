@@ -37,6 +37,39 @@ import {
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 
+const getDefaultConsentTerm = (data: EnrollmentData): string => {
+  return `TERMO DE CONSENTIMENTO E RESPONSABILIDADE - UOU MOVEMENT
+
+Eu, ${data.fullName || '[Nome do Participante]'}, portador(a) do CPF ${data.cpf || '[CPF]'}, Tipo Sanguíneo ${data.bloodType || '[Tipo Sanguíneo]'}, declaro para os devidos fins que:
+
+1. NATUREZA DA ATIVIDADE
+Estou ciente de que o programa "Chamado UOU MOVEMENT" consiste em um treinamento intensivo de simulação e preparo missionário para contextos de risco. As atividades podem incluir desafios físicos extremos, privação de sono, estresse emocional e exercícios de prontidão espiritual.
+
+2. DECLARAÇÃO DE APTIDÃO FÍSICA
+Declaro estar apto(a) fisicamente para participar das atividades propostas, assumindo integralmente os riscos inerentes, incluindo possibilidade de lesões, cansaço extremo e desconforto físico.
+${data.healthConditions ? `\nCondições de saúde declaradas: ${data.healthConditions}` : ''}
+${data.allergies ? `Alergias declaradas: ${data.allergies}` : ''}
+
+3. TRATAMENTO DE DADOS (LGPD)
+Autorizo o tratamento dos meus dados pessoais e sensíveis para fins exclusivos de segurança médica, logística operacional e comunicação do programa, conforme a Lei Geral de Proteção de Dados (Lei 13.709/2018).
+
+4. AUTORIZAÇÃO DE IMAGEM E VOZ
+Autorizo o uso da minha imagem e voz para fins de registro ministerial e institucional do UOU MOVEMENT.
+
+5. CONFIDENCIALIDADE
+Comprometo-me a manter sigilo absoluto sobre locais, protocolos de segurança e estratégias ensinadas durante o treinamento.
+
+6. EMERGÊNCIAS MÉDICAS
+Autorizo a equipe do UOU MOVEMENT a tomar providências médicas de emergência em meu nome, incluindo transporte e atendimento hospitalar.
+
+Contato de Emergência: ${data.emergencyContact || '[Não informado]'} - ${data.emergencyPhone || '[Não informado]'}
+
+Ao aceitar este termo, declaro ter lido e compreendido todas as cláusulas acima, aceitando integralmente as condições estabelecidas.
+
+Data: ${new Date().toLocaleDateString('pt-BR')}
+Local: ${data.city || '[Cidade]'} - ${data.state || '[Estado]'}`;
+};
+
 interface EnrollmentFormProps {
   user: UserProfile;
   onComplete: (data: EnrollmentData, paymentMethod: string, videoBlob: Blob) => void;
@@ -215,22 +248,28 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
 
     if (step === 4) {
       setLoading(true);
-      const term = await generateConsentTerm(formData);
-      setConsentTerm(term);
-      setLoading(false);
+      try {
+        const term = await generateConsentTerm(formData);
+        // generateConsentTerm retorna string de erro em vez de lançar exceção
+        if (term && !term.startsWith('Erro') && !term.startsWith('Configuração')) {
+          setConsentTerm(term);
+        } else {
+          console.warn('Gemini retornou mensagem de erro:', term);
+          setConsentTerm(getDefaultConsentTerm(formData));
+        }
+      } catch (err) {
+        console.error('Erro na geração do termo:', err);
+        setConsentTerm(getDefaultConsentTerm(formData));
+      } finally {
+        setLoading(false);
+      }
     }
     setStep(prev => prev + 1);
   };
 
   const handleBack = () => setStep(prev => prev - 1);
 
-  const handlePayment = (method: string) => {
-    setPaymentMethod(method);
-    setIsProcessingPayment(true);
-    setTimeout(() => {
-      setIsProcessingPayment(false);
-    }, 2000);
-  };
+  const [hasPaid, setHasPaid] = useState<boolean | null>(null);
 
   const downloadPDF = () => {
     if (!consentTerm) return;
@@ -583,72 +622,83 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
               <div className="w-20 h-20 bg-emerald-500/10 text-emerald-500 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-emerald-500/20">
                 <CheckCircle size={40} />
               </div>
-              <h2 className="text-3xl font-black uppercase tracking-tighter">Inscrição Validada</h2>
+              <h2 className="text-3xl font-black uppercase tracking-tighter">Confirmação de Pagamento</h2>
               <p className="text-slate-500 text-sm mt-3 font-medium max-w-sm mx-auto">
-                Seu registro foi processado e está sob análise tática. Para confirmar seu lugar garantido no campo, agora escolha o método de logística financeira.
+                Para finalizar sua inscrição, confirme a situação do seu pagamento abaixo.
               </p>
             </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <button
-                onClick={() => handlePayment('PIX')}
-                className={`p-10 border-2 rounded-[2.5rem] transition-all flex flex-col items-center gap-6 group relative overflow-hidden ${
-                  paymentMethod === 'PIX' ? 'bg-red-700 border-red-700 text-white' : 'bg-slate-950 border-slate-800 hover:border-red-700/50'
-                }`}
-              >
-                <div className={`p-4 rounded-2xl transition-colors ${paymentMethod === 'PIX' ? 'bg-white text-red-700' : 'bg-red-700/10 text-red-500'}`}>
-                  <QrCode size={32} />
-                </div>
-                <div className="text-center">
-                  <h4 className="font-black uppercase tracking-tighter text-xl">PIX Direto</h4>
-                  <p className={`text-[10px] uppercase font-bold tracking-widest mt-1 ${paymentMethod === 'PIX' ? 'text-white/70' : 'text-slate-500'}`}>
-                    Liberação Imediata
-                  </p>
-                </div>
-                {paymentMethod === 'PIX' && isProcessingPayment && (
-                  <div className="absolute inset-0 bg-red-700/95 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
-                    <Loader2 className="animate-spin" size={32} />
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em]">Gerando QR Code...</span>
-                  </div>
-                )}
-              </button>
-
-              <button
-                onClick={() => handlePayment('CARD')}
-                className={`p-10 border-2 rounded-[2.5rem] transition-all flex flex-col items-center gap-6 group relative overflow-hidden ${
-                  paymentMethod === 'CARD' ? 'bg-red-700 border-red-700 text-white' : 'bg-slate-950 border-slate-800 hover:border-red-700/50'
-                }`}
-              >
-                <div className={`p-4 rounded-2xl transition-colors ${paymentMethod === 'CARD' ? 'bg-white text-red-700' : 'bg-slate-800 text-slate-500'}`}>
-                  <CreditCard size={32} />
-                </div>
-                <div className="text-center">
-                  <h4 className="font-black uppercase tracking-tighter text-xl">Cartão de Crédito</h4>
-                  <p className={`text-[10px] uppercase font-bold tracking-widest mt-1 ${paymentMethod === 'CARD' ? 'text-white/70' : 'text-slate-500'}`}>
-                    Até 12x no Checkout
-                  </p>
-                </div>
-                {paymentMethod === 'CARD' && isProcessingPayment && (
-                  <div className="absolute inset-0 bg-red-700/95 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
-                    <Loader2 className="animate-spin" size={32} />
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em]">Redirecionando...</span>
-                  </div>
-                )}
-              </button>
+            {/* Pergunta: Já realizou o pagamento? */}
+            <div className="space-y-4">
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400 text-center">Você já realizou o pagamento da inscrição?</p>
+              <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
+                <button
+                  onClick={() => setHasPaid(true)}
+                  className={`p-6 border-2 rounded-2xl transition-all font-black uppercase tracking-wider text-sm ${
+                    hasPaid === true ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-900/30' : 'bg-slate-950 border-slate-800 hover:border-emerald-600/50 text-slate-400'
+                  }`}
+                >
+                  <CheckCircle size={24} className="mx-auto mb-2" />
+                  Sim, já paguei
+                </button>
+                <button
+                  onClick={() => { setHasPaid(false); setPaymentMethod(null); }}
+                  className={`p-6 border-2 rounded-2xl transition-all font-black uppercase tracking-wider text-sm ${
+                    hasPaid === false ? 'bg-amber-600 border-amber-600 text-white shadow-lg shadow-amber-900/30' : 'bg-slate-950 border-slate-800 hover:border-amber-600/50 text-slate-400'
+                  }`}
+                >
+                  <AlertCircle size={24} className="mx-auto mb-2" />
+                  Ainda não
+                </button>
+              </div>
             </div>
 
+            {/* Se SIM: Qual método? */}
+            {hasPaid === true && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400 text-center">Qual foi o método de pagamento?</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+                  {[
+                    { id: 'PIX', label: 'PIX', icon: <QrCode size={28} /> },
+                    { id: 'CARTAO', label: 'Cartão', icon: <CreditCard size={28} /> },
+                    { id: 'DINHEIRO', label: 'Dinheiro', icon: <Wallet size={28} /> },
+                  ].map(m => (
+                    <button
+                      key={m.id}
+                      onClick={() => setPaymentMethod(m.id)}
+                      className={`p-8 border-2 rounded-2xl transition-all flex flex-col items-center gap-3 ${
+                        paymentMethod === m.id ? 'bg-red-700 border-red-700 text-white shadow-lg shadow-red-900/30' : 'bg-slate-950 border-slate-800 hover:border-red-700/50 text-slate-400'
+                      }`}
+                    >
+                      {m.icon}
+                      <span className="font-black uppercase tracking-wider text-sm">{m.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Se NÃO: Mensagem de orientação */}
+            {hasPaid === false && (
+              <div className="bg-amber-950/20 border border-amber-900/30 p-6 rounded-2xl text-center animate-in fade-in slide-in-from-bottom-2">
+                <p className="text-amber-400 text-sm font-bold">Sem problemas! Você pode concluir a inscrição agora e realizar o pagamento depois.</p>
+                <p className="text-slate-500 text-xs mt-2">Sua inscrição ficará com status "Pagamento Pendente" até a confirmação.</p>
+              </div>
+            )}
+
+            {/* Botão de Finalizar */}
             <div className="flex flex-col items-center gap-4">
               <button
-                disabled={!paymentMethod || isProcessingPayment}
-                onClick={() => onComplete(formData, paymentMethod!, videoBlob!)}
+                disabled={hasPaid === null || (hasPaid === true && !paymentMethod)}
+                onClick={() => onComplete(formData, hasPaid ? (paymentMethod || 'PENDENTE') : 'PENDENTE', videoBlob!)}
                 className="w-full md:w-auto px-20 py-6 bg-red-700 hover:bg-red-600 disabled:opacity-20 text-white rounded-2xl font-black uppercase tracking-widest transition-all shadow-2xl flex items-center justify-center gap-4 text-sm group"
               >
-                {paymentMethod ? 'Avançar com Pagamento' : 'Selecione o Método'}
+                Finalizar Inscrição
                 <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />
               </button>
               <div className="flex items-center gap-2 text-slate-600">
                 <ShieldCheck size={16} />
-                <span className="text-[9px] uppercase font-black tracking-widest">Transação Criptografada SSL</span>
+                <span className="text-[9px] uppercase font-black tracking-widest">Dados protegidos por criptografia</span>
               </div>
             </div>
           </div>

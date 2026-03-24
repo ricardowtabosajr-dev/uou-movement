@@ -22,6 +22,7 @@ const App: React.FC = () => {
   const [enrollments, setEnrollments] = useState<UserProfile[]>([]);
   const [view, setView] = useState<AppView>('DASHBOARD');
   const [loading, setLoading] = useState(true);
+  const [loadingMessage, setLoadingMessage] = useState('');
   const [showApp, setShowApp] = useState(false);
   const [authModal, setAuthModal] = useState<{ open: boolean, mode: 'LOGIN' | 'SIGNUP' }>({ open: false, mode: 'LOGIN' });
 
@@ -95,58 +96,94 @@ const App: React.FC = () => {
     if (!user) return;
 
     setLoading(true);
+    setLoadingMessage('SALVANDO DADOS DA MISSÃO...');
     
-    // 1. Salvar os dados detalhados da inscrição
-    const enrollResult = await saveEnrollment(user.id, data);
-    if (!enrollResult.success) {
-      alert(`Erro ao salvar inscrição: ${enrollResult.error}`);
+    // Timeout de segurança: se demorar mais de 45 segundos, destrava a tela
+    const safetyTimeout = setTimeout(() => {
       setLoading(false);
-      return;
-    }
+      setLoadingMessage('');
+      alert("O processo está demorando mais que o esperado. Verificando o dashboard...");
+      setView('DASHBOARD');
+    }, 45000);
 
-    // 2. Fazer upload do vídeo de identidade
-    const videoResult = await uploadIdentityVideo(user.id, videoBlob);
-    if (!videoResult.success) {
-      console.error('Erro no upload do vídeo:', videoResult.error);
-      // Continua mesmo se o vídeo falhar, para não travar o fluxo principal
-    }
+    try {
+      // 1. Salvar os dados detalhados da inscrição
+      const enrollResult = await saveEnrollment(user.id, data);
+      if (!enrollResult.success) {
+        throw new Error(`Inscrição: ${enrollResult.error}`);
+      }
 
-    // 3. Registrar o pagamento (como PENDING para PIX ou PAID para simulação)
-    await createPayment({
-      user_id: user.id,
-      amount: 1200.00, // Valor exemplo da inscrição
-      method: paymentMethod,
-      status: paymentMethod === 'PIX' ? 'PENDING' : 'PAID'
-    });
+      // 2. Fazer upload do vídeo de identidade
+      setLoadingMessage('ENVIANDO VÍDEO DE IDENTIDADE...');
+      try {
+        await uploadIdentityVideo(user.id, videoBlob);
+      } catch (videoErr) {
+        console.error('Erro no upload do vídeo:', videoErr);
+        // Não trava o fluxo se for erro de vídeo (ex: bucket sem política de escrita)
+      }
 
-    // 4. Atualizar o status do perfil no banco
-    await updateProfile(user.id, {
-      enrollmentStatus: EnrollmentStatus.REVIEWING,
-      paymentStatus: paymentMethod === 'PIX' ? PaymentStatus.PENDING : PaymentStatus.PAID,
-    });
-
-    // 5. Atualizar o estado local
-    const updatedUser: UserProfile = {
-      ...user,
-      enrollmentStatus: EnrollmentStatus.REVIEWING,
-      paymentStatus: paymentMethod === 'PIX' ? PaymentStatus.PENDING : PaymentStatus.PAID,
-    };
-    setUser(updatedUser);
-
-    // 6. Sincronizar lista de inscritos para admins
-    if (user.role === UserRole.ADMIN) {
-      const allProfiles = await getAllProfiles();
-      setEnrollments(allProfiles);
-    } else {
-      setEnrollments(prev => {
-        const exists = prev.find(e => e.id === updatedUser.id);
-        if (exists) return prev.map(e => e.id === updatedUser.id ? updatedUser : e);
-        return [updatedUser, ...prev];
+      // 3. Registrar o pagamento
+      setLoadingMessage('PROCESSANDO LOGÍSTICA DE PAGAMENTO...');
+      const isPaid = paymentMethod !== 'PENDENTE';
+      await createPayment({
+        user_id: user.id,
+        amount: 1200.00,
+        method: paymentMethod,
+        status: isPaid ? 'PAID' : 'PENDING'
       });
-    }
 
-    setLoading(false);
-    setView('DASHBOARD');
+      // 4. Atualizar o status do perfil no banco
+      setLoadingMessage('FINALIZANDO REGISTRO TÁTICO...');
+      const updates = {
+        enrollmentStatus: EnrollmentStatus.REVIEWING,
+        paymentStatus: isPaid ? PaymentStatus.PAID : PaymentStatus.PENDING,
+      };
+
+      
+      await updateProfile(user.id, updates);
+
+      // 5. Atualizar o estado local
+      const updatedUser: UserProfile = { ...user, ...updates };
+      setUser(updatedUser);
+
+      // 6. Sincronizar lista de inscritos para admins
+      if (user.role === UserRole.ADMIN) {
+        await loadEnrollments();
+      } else {
+        setEnrollments(prev => {
+          const exists = prev.find(e => e.id === updatedUser.id);
+          if (exists) return prev.map(e => e.id === updatedUser.id ? updatedUser : e);
+          return [updatedUser, ...prev];
+        });
+      }
+      
+      setView('DASHBOARD');
+    } catch (err: any) {
+      console.error('Erro crítico na inscrição:', err);
+      alert(`Erro estratégico: ${err.message || 'Verifique sua conexão.'}`);
+    } finally {
+      clearTimeout(safetyTimeout);
+      setLoading(false);
+      setLoadingMessage('');
+    }
+  };
+
+  const handleToggleRole = async () => {
+    if (!user) return;
+    const newRole = user.role === UserRole.ADMIN ? UserRole.USER : UserRole.ADMIN;
+    
+    setLoading(true);
+    try {
+      await updateProfile(user.id, { role: newRole });
+      setUser({ ...user, role: newRole });
+      if (newRole === UserRole.ADMIN) {
+        await loadEnrollments();
+      }
+    } catch (err: any) {
+      alert("Erro ao alterar privilégios no servidor.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const updateEnrollmentStatus = async (userId: string, status: EnrollmentStatus) => {
@@ -160,8 +197,8 @@ const App: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center h-screen space-y-4 bg-slate-950">
         <div className="w-12 h-12 border-4 border-red-700 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-slate-400 animate-pulse font-mono tracking-widest text-xs uppercase text-center px-4">
-          Sincronizando Identidade Tática...
+        <p className="text-white font-bold animate-pulse font-mono tracking-widest text-[10px] uppercase text-center px-4">
+          {loadingMessage || 'Sincronizando Identidade Tática...'}
         </p>
       </div>
     );
@@ -251,7 +288,7 @@ const App: React.FC = () => {
         activeView={view} 
         onViewChange={(v) => setView(v as AppView)} 
         onLogout={handleLogout}
-        onToggleRole={() => {}}
+        onToggleRole={handleToggleRole}
       />
       
       <main className="flex-1 overflow-y-auto p-4 md:p-8">
