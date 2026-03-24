@@ -12,9 +12,15 @@ View your app in AI Studio: https://ai.studio/apps/drive/1FognpKRRgogbRIprGDeVW2
 
 **Prerequisites:**  Node.js
 
+1.  Install dependencies:
+    `npm install`
+2.  Copy `.env.example` to `.env.local` and set the following keys:
+    *   `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` (Supabase)
+    *   `VITE_GEMINI_API_KEY` (Gemini API Key do Google)
+3.  Run the app:
+    `npm run dev`
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### 🚀 Novas Funcionalidades de IA (Gemini)
+O sistema agora utiliza o **Gemini 2.0 Flash** para:
+- **Geração de Termos de Consentimento**: Analisa os dados de saúde e residência do recruta para gerar um termo personalizado de alta intensidade em conformidade com a LGPD.
+- **Insights Estratégicos**: O painel administrativo agora recebe insights automáticos sobre as metas da missão e conversão de participantes.
