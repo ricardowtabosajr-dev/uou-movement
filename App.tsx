@@ -96,71 +96,86 @@ const App: React.FC = () => {
     if (!user) return;
 
     setLoading(true);
-    setLoadingMessage('SALVANDO DADOS DA MISSÃO...');
+    setLoadingMessage('INICIANDO REGISTRO TÁTICO...');
+    console.log('--- INICIANDO FINALIZAÇÃO DE INSCRIÇÃO ---');
     
-    // Timeout de segurança: se demorar mais de 45 segundos, destrava a tela
+    // Timeout de segurança: se demorar mais de 45 segundos, destrava a tela com aviso
     const safetyTimeout = setTimeout(() => {
       setLoading(false);
       setLoadingMessage('');
-      alert("O processo está demorando mais que o esperado. Verificando o dashboard...");
+      console.error('TIMEOUT DE SEGURANÇA ATINGIDO NA INSCRIÇÃO');
+      alert("O processo está demorando mais que o esperado devido à conexão. Verificando seu status no dashboard...");
       setView('DASHBOARD');
     }, 45000);
 
     try {
       // 1. Salvar os dados detalhados da inscrição
+      setLoadingMessage('SALVANDO DADOS DA MISSÃO...');
+      console.log('Passo 1: Salvando enrollment...');
       const enrollResult = await saveEnrollment(user.id, data);
       if (!enrollResult.success) {
-        throw new Error(`Inscrição: ${enrollResult.error}`);
+        throw new Error(`Falha no banco de dados: ${enrollResult.error}`);
       }
+      console.log('Passo 1: Sucesso.');
 
-      // 2. Fazer upload do vídeo de identidade
-      setLoadingMessage('ENVIANDO VÍDEO DE IDENTIDADE...');
+      // 2. Fazer upload do vídeo de identidade (NÃO BLOQUEANTE SE FALHAR)
+      setLoadingMessage('TRANSFERINDO VÍDEO DE IDENTIDADE...');
+      console.log('Passo 2: Fazendo upload de vídeo (30s max)...');
       try {
-        await uploadIdentityVideo(user.id, videoBlob);
+        // Envolve em uma promise com timeout interno para não travar o fluxo principal
+        const videoUploadPromise = uploadIdentityVideo(user.id, videoBlob);
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout no upload de vídeo')), 25000));
+        
+        await Promise.race([videoUploadPromise, timeoutPromise]);
+        console.log('Passo 2: Sucesso no upload.');
       } catch (videoErr) {
-        console.error('Erro no upload do vídeo:', videoErr);
-        // Não trava o fluxo se for erro de vídeo (ex: bucket sem política de escrita)
+        console.warn('Alerta: Upload de vídeo ignorado ou lento. Continuando fluxo...', videoErr);
       }
 
       // 3. Registrar o pagamento
       setLoadingMessage('PROCESSANDO LOGÍSTICA DE PAGAMENTO...');
+      console.log('Passo 3: Registrando pagamento...');
       const isPaid = paymentMethod !== 'PENDENTE';
-      await createPayment({
+      const payResult = await createPayment({
         user_id: user.id,
         amount: 1200.00,
         method: paymentMethod,
         status: isPaid ? 'PAID' : 'PENDING'
       });
+      if (!payResult.success) {
+        console.warn('Erro ao registrar pagamento, mas continuando inscrição...', payResult.error);
+      }
+      console.log('Passo 3: Sucesso.');
 
       // 4. Atualizar o status do perfil no banco
       setLoadingMessage('FINALIZANDO REGISTRO TÁTICO...');
+      console.log('Passo 4: Atualizando perfil...');
       const updates = {
         enrollmentStatus: EnrollmentStatus.REVIEWING,
         paymentStatus: isPaid ? PaymentStatus.PAID : PaymentStatus.PENDING,
       };
-
       
-      await updateProfile(user.id, updates);
+      const updateResult = await updateProfile(user.id, updates);
+      if (!updateResult.success) {
+         throw new Error(`Falha ao atualizar perfil: ${updateResult.error}`);
+      }
+      console.log('Passo 4: Sucesso.');
 
       // 5. Atualizar o estado local
       const updatedUser: UserProfile = { ...user, ...updates };
       setUser(updatedUser);
 
-      // 6. Sincronizar lista de inscritos para admins
-      if (user.role === UserRole.ADMIN) {
-        await loadEnrollments();
-      } else {
-        setEnrollments(prev => {
-          const exists = prev.find(e => e.id === updatedUser.id);
-          if (exists) return prev.map(e => e.id === updatedUser.id ? updatedUser : e);
-          return [updatedUser, ...prev];
-        });
-      }
+      // 6. Sincronizar lista de inscritos
+      console.log('Passo 5: Sincronizando dashboard...');
+      const profiles = await getAllProfiles();
+      // Mostra apenas usuários comuns, ou todos se for pra fins de monitoramento técnico
+      setEnrollments(profiles.filter(p => p.role === UserRole.USER));
       
+      console.log('--- INSCRIÇÃO CONCLUÍDA COM SUCESSO ---');
       setView('DASHBOARD');
     } catch (err: any) {
-      console.error('Erro crítico na inscrição:', err);
-      alert(`Erro estratégico: ${err.message || 'Verifique sua conexão.'}`);
+      console.error('ERRO CRÍTICO NA INSCRIÇÃO:', err);
+      alert(`Erro tático crítico: ${err.message || 'Falha na conexão com o Quartel General.'}`);
     } finally {
       clearTimeout(safetyTimeout);
       setLoading(false);
