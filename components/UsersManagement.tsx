@@ -92,6 +92,7 @@ const UsersManagement: React.FC<UsersManagementProps> = ({ enrollments, onApprov
           <input 
             type="text" 
             placeholder="Buscar por nome ou email..." 
+            aria-label="Buscar participantes"
             className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-3 outline-none focus:ring-2 ring-red-500/50 text-sm"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

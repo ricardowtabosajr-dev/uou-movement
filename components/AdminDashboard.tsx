@@ -60,8 +60,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ enrollments = [] }) => 
                 {stat.change}
               </span>
             </div>
-            <h3 className="text-3xl font-bold mb-1">{stat.value}</h3>
-            <p className="text-sm text-slate-500 font-medium">{stat.label}</p>
+            <h3 className="text-[clamp(1.25rem,4vw,1.875rem)] font-black mb-1 leading-tight">{stat.value}</h3>
+            <p className="text-sm text-slate-500 font-bold leading-relaxed">{stat.label}</p>
           </div>
         ))}
       </div>
@@ -71,11 +71,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ enrollments = [] }) => 
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-bold">Fluxo de Inscrições vs Pagamentos</h3>
-              <select className="bg-slate-800 border-none rounded text-xs px-2 py-1">
-                <option>Últimos 6 meses</option>
-                <option>Este ano</option>
-              </select>
+              <h3 className="text-lg font-black leading-snug">Fluxo de Inscrições vs Pagamentos</h3>
+              <div className="flex items-center gap-2">
+                <label htmlFor="period-select" className="sr-only">Período</label>
+                <select id="period-select" className="bg-slate-800 border-none rounded text-xs px-2 py-1 text-slate-300">
+                  <option>Últimos 6 meses</option>
+                  <option>Este ano</option>
+                </select>
+              </div>
             </div>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -101,7 +104,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ enrollments = [] }) => 
 
           <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
              <div className="p-6 border-b border-slate-800 flex justify-between items-center">
-                <h3 className="font-bold">Inscrições Recentes</h3>
+                <h3 className="font-black leading-snug">Inscrições Recentes</h3>
                 <button className="text-red-500 text-sm font-medium hover:underline flex items-center gap-1">
                   Ver todas <ChevronRight size={16} />
                 </button>
@@ -122,8 +125,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ enrollments = [] }) => 
                         <div className="flex items-center gap-3">
                           <img src={user.avatarUrl} className="w-8 h-8 rounded-full border border-slate-700" alt={user.name} />
                           <div>
-                            <p className="text-sm font-medium">{user.name}</p>
-                            <p className="text-xs text-slate-500">{user.email}</p>
+                            <p className="text-sm font-bold leading-normal">{user.name}</p>
+                            <p className="text-xs text-slate-500 leading-normal">{user.email}</p>
                           </div>
                         </div>
                      </td>

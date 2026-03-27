@@ -136,7 +136,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterAdmin, onEnterUser }) 
                </div>
                <div className="text-left">
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 leading-none mb-1">Impacto Global</p>
-                  <p className="text-sm font-black whitespace-nowrap"><span className="text-white">12.5k+</span> <span className="text-slate-400">Participantes</span></p>
+                  <p className="text-sm font-black whitespace-nowrap"><span className="text-white">12.543</span> <span className="text-slate-400">Participantes</span></p>
                </div>
             </div>
           </div>
@@ -174,7 +174,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterAdmin, onEnterUser }) 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           {missions.map((m, i) => (
             <div key={i} className="group relative rounded-[2.5rem] overflow-hidden aspect-[4/5] border border-slate-900 shadow-2xl">
-              <img src={m.img} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-[1.5s]" alt="" />
+              <img src={m.img} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-[1.5s]" alt={`Missão: ${m.title} em ${m.location}`} />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent"></div>
               <div className="absolute bottom-0 left-0 p-10 w-full space-y-4">
                 <span className="inline-block px-3 py-1 bg-red-700 text-[10px] font-black uppercase rounded-lg tracking-widest shadow-lg">{m.intensity}</span>
@@ -223,7 +223,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterAdmin, onEnterUser }) 
                    </div>
                    <div>
                       <p className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] mb-1">Alcance do Movimento</p>
-                      <p className="text-2xl font-black text-white">40+ NAÇÕES ATIVAS</p>
+                      <p className="text-2xl font-black text-white">42 NAÇÕES ATIVAS</p>
                    </div>
                 </div>
              </div>
@@ -243,7 +243,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterAdmin, onEnterUser }) 
             {historicalActions.map((h, i) => (
               <div key={i} className="bg-slate-950 border border-slate-900 rounded-[2.5rem] p-8 hover:border-red-700/40 transition-all group">
                 <div className="aspect-video rounded-3xl overflow-hidden mb-8 relative">
-                  <img src={h.img} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt="" />
+                  <img src={h.img} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt={`Ação Estratégica: ${h.name} (${h.year})`} />
                   <div className="absolute top-6 left-6 bg-slate-900/90 backdrop-blur-md px-4 py-1.5 rounded-xl text-[10px] font-black tracking-widest border border-white/5">{h.year}</div>
                 </div>
                 <h4 className="text-2xl font-black uppercase tracking-tight mb-3">{h.name}</h4>

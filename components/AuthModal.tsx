@@ -121,7 +121,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess, i
             {mode === 'SIGNUP' && (
               <div className="relative">
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                <label htmlFor="auth-name" className="sr-only">Seu Nome Completo</label>
                 <input
+                  id="auth-name"
                   type="text"
                   required
                   placeholder="Seu Nome Completo"
@@ -133,7 +135,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess, i
             )}
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <label htmlFor="auth-email" className="sr-only">Seu Email Operacional</label>
               <input
+                id="auth-email"
                 type="email"
                 required
                 placeholder="Seu Email Operacional"
@@ -144,7 +148,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess, i
             </div>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <label htmlFor="auth-password" className="sr-only">Código de Acesso</label>
               <input
+                id="auth-password"
                 type="password"
                 required
                 minLength={6}

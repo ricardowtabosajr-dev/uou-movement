@@ -257,8 +257,9 @@ const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ enrollments, is
               </div>
               <div className="p-8 space-y-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Chave PIX</label>
+                  <label htmlFor="pix-key-input" className="text-[10px] font-black uppercase tracking-widest text-slate-500">Chave PIX</label>
                   <input
+                    id="pix-key-input"
                     required
                     type="text"
                     value={tempPixKey}
@@ -394,8 +395,9 @@ const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ enrollments, is
                   Cole aqui o link de pagamento gerado no app da sua máquina (PagSeguro, Stone, etc). O participante será levado para este link ao clicar em pagar.
                 </p>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Link da Máquina</label>
+                  <label htmlFor="card-link-input" className="text-[10px] font-black uppercase tracking-widest text-slate-500">Link da Máquina</label>
                   <input
+                    id="card-link-input"
                     required
                     type="url"
                     value={tempCardLink}

@@ -146,8 +146,9 @@ const MissionManagement: React.FC = () => {
                      <div className="p-8 space-y-6 max-h-[70vh] overflow-y-auto">
                         <div className="grid grid-cols-1 gap-6">
                            <div className="space-y-2">
-                              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Nome da Operação</label>
+                              <label htmlFor="mission-title" className="text-[10px] font-black uppercase tracking-widest text-slate-500">Nome da Operação</label>
                               <input
+                                 id="mission-title"
                                  required
                                  type="text"
                                  value={editingMission.title}
@@ -158,8 +159,9 @@ const MissionManagement: React.FC = () => {
                            </div>
 
                            <div className="space-y-2">
-                              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Descrição / Objetivo</label>
+                              <label htmlFor="mission-desc" className="text-[10px] font-black uppercase tracking-widest text-slate-500">Descrição / Objetivo</label>
                               <textarea
+                                 id="mission-desc"
                                  required
                                  rows={3}
                                  value={editingMission.description}
@@ -171,8 +173,9 @@ const MissionManagement: React.FC = () => {
 
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div className="space-y-2">
-                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Data de Início</label>
+                                 <label htmlFor="mission-start" className="text-[10px] font-black uppercase tracking-widest text-slate-500">Data de Início</label>
                                  <input
+                                    id="mission-start"
                                     required
                                     type="date"
                                     value={editingMission.startDate}
@@ -181,8 +184,9 @@ const MissionManagement: React.FC = () => {
                                  />
                               </div>
                               <div className="space-y-2">
-                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Data de Término</label>
+                                 <label htmlFor="mission-end" className="text-[10px] font-black uppercase tracking-widest text-slate-500">Data de Término</label>
                                  <input
+                                    id="mission-end"
                                     required
                                     type="date"
                                     value={editingMission.endDate}
@@ -194,8 +198,9 @@ const MissionManagement: React.FC = () => {
 
                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                               <div className="space-y-2">
-                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Capacidade</label>
+                                 <label htmlFor="mission-capacity" className="text-[10px] font-black uppercase tracking-widest text-slate-500">Capacidade</label>
                                  <input
+                                    id="mission-capacity"
                                     required
                                     type="number"
                                     value={editingMission.capacity}
@@ -204,8 +209,9 @@ const MissionManagement: React.FC = () => {
                                  />
                               </div>
                               <div className="space-y-2">
-                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Inscritos</label>
+                                 <label htmlFor="mission-enrolled" className="text-[10px] font-black uppercase tracking-widest text-slate-500">Inscritos</label>
                                  <input
+                                    id="mission-enrolled"
                                     required
                                     type="number"
                                     value={editingMission.enrolled}
@@ -214,8 +220,9 @@ const MissionManagement: React.FC = () => {
                                  />
                               </div>
                               <div className="space-y-2">
-                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Status</label>
+                                 <label htmlFor="mission-status" className="text-[10px] font-black uppercase tracking-widest text-slate-500">Status</label>
                                  <select
+                                    id="mission-status"
                                     value={editingMission.status}
                                     onChange={e => setEditingMission({ ...editingMission, status: e.target.value as any })}
                                     className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all font-bold"

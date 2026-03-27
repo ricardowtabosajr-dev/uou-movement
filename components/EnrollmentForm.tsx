@@ -408,8 +408,8 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
               <InputGroup label="Data de Nascimento" name="birthDate" value={formData.birthDate} onChange={handleChange} type="date" />
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Sexo</label>
-                <select name="gender" value={formData.gender} onChange={handleChange} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 outline-none focus:ring-2 ring-red-500/50 appearance-none text-slate-300">
+                <label htmlFor="gender-select" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Sexo</label>
+                <select id="gender-select" name="gender" value={formData.gender} onChange={handleChange} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 outline-none focus:ring-2 ring-red-500/50 appearance-none text-slate-300">
                   <option value="">Selecione...</option>
                   <option value="Masculino">Masculino</option>
                   <option value="Feminino">Feminino</option>
@@ -436,8 +436,8 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
               <InputGroup label="RG" name="rg" value={formData.rg} onChange={handleChange} placeholder="Registro Geral" />
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 text-slate-500">Estado Civil</label>
-                <select name="maritalStatus" value={formData.maritalStatus} onChange={handleChange} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 outline-none focus:ring-2 ring-red-500/50 appearance-none text-slate-300">
+                <label htmlFor="marital-status-select" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 text-slate-500">Estado Civil</label>
+                <select id="marital-status-select" name="maritalStatus" value={formData.maritalStatus} onChange={handleChange} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 outline-none focus:ring-2 ring-red-500/50 appearance-none text-slate-300">
                   <option value="">Selecione...</option>
                   <option value="Solteiro">Solteiro(a)</option>
                   <option value="Casado">Casado(a)</option>
@@ -501,20 +501,20 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
               <InputGroup label="Telefone do Pastor" name="pastorPhone" value={formData.pastorPhone} onChange={handleChange} placeholder="(00) 00000-0000" />
               <InputGroup label="Tempo de Conversão" name="conversionTime" value={formData.conversionTime} onChange={handleChange} placeholder="Ex: 5 anos" />
               
-              <div className="flex items-center gap-6 p-4 bg-slate-950/50 rounded-xl border border-slate-800">
+               <div className="flex items-center gap-6 p-4 bg-slate-950/50 rounded-xl border border-slate-800">
                 <div className="flex items-center gap-2">
-                  <input type="checkbox" name="baptized" checked={formData.baptized} onChange={handleChange} className="w-5 h-5 accent-red-600" />
-                  <label className="text-xs font-bold uppercase text-slate-400">Batizado(a)</label>
+                  <input type="checkbox" id="baptized-check" name="baptized" checked={formData.baptized} onChange={handleChange} className="w-5 h-5 accent-red-600" />
+                  <label htmlFor="baptized-check" className="text-xs font-bold uppercase text-slate-400 cursor-pointer">Batizado(a)</label>
                 </div>
                 <div className="flex items-center gap-2">
-                  <input type="checkbox" name="baptizedInHolySpirit" checked={formData.baptizedInHolySpirit} onChange={handleChange} className="w-5 h-5 accent-red-600" />
-                  <label className="text-xs font-bold uppercase text-slate-400">Batismo no ES</label>
+                  <input type="checkbox" id="baptizedInHolySpirit-check" name="baptizedInHolySpirit" checked={formData.baptizedInHolySpirit} onChange={handleChange} className="w-5 h-5 accent-red-600" />
+                  <label htmlFor="baptizedInHolySpirit-check" className="text-xs font-bold uppercase text-slate-400 cursor-pointer">Batismo no ES</label>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 p-4 bg-slate-950/50 rounded-xl border border-slate-800">
-                <input type="checkbox" name="pastoralRecommendation" checked={formData.pastoralRecommendation} onChange={handleChange} className="w-5 h-5 accent-red-600" />
-                <label className="text-xs font-bold uppercase text-slate-400">Tenho recomendação pastoral</label>
+                <input type="checkbox" id="pastoralRecommendation-check" name="pastoralRecommendation" checked={formData.pastoralRecommendation} onChange={handleChange} className="w-5 h-5 accent-red-600" />
+                <label htmlFor="pastoralRecommendation-check" className="text-xs font-bold uppercase text-slate-400 cursor-pointer">Tenho recomendação pastoral</label>
               </div>
 
               <div className="md:col-span-2">
@@ -542,16 +542,16 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
               <InputGroup label="Telefone de Emergência" name="emergencyPhone" value={formData.emergencyPhone} onChange={handleChange} placeholder="(00) 00000-0000" icon={<Smartphone size={14} />} />
               
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Tipo Sanguíneo</label>
-                <select name="bloodType" value={formData.bloodType} onChange={handleChange} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 outline-none focus:ring-2 ring-red-500/50 appearance-none text-slate-300">
+                <label htmlFor="bloodType" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Tipo Sanguíneo</label>
+                <select id="bloodType" name="bloodType" value={formData.bloodType} onChange={handleChange} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 outline-none focus:ring-2 ring-red-500/50 appearance-none text-slate-300">
                   <option value="">Selecione...</option>
                   {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
 
               <div className="flex items-center gap-2 p-4 bg-slate-950/50 rounded-xl border border-slate-800">
-                <input type="checkbox" name="hasPhysicalConstraint" checked={formData.hasPhysicalConstraint} onChange={handleChange} className="w-5 h-5 accent-red-600" />
-                <label className="text-xs font-bold uppercase text-slate-400">Tenho restrição física/limitação</label>
+                <input type="checkbox" id="hasPhysicalConstraint-check" name="hasPhysicalConstraint" checked={formData.hasPhysicalConstraint} onChange={handleChange} className="w-5 h-5 accent-red-600" />
+                <label htmlFor="hasPhysicalConstraint-check" className="text-xs font-bold uppercase text-slate-400">Tenho restrição física/limitação</label>
               </div>
 
               <div className="md:col-span-2">
@@ -731,13 +731,13 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
 
 const InputGroup = ({ label, name, value, onChange, placeholder, type = 'text', isTextArea = false, icon }: any) => (
   <div className="space-y-1.5 flex-1">
-    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+    <label htmlFor={name} className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
       {icon} {label}
     </label>
     {isTextArea ? (
-      <textarea name={name} value={value} onChange={onChange} placeholder={placeholder} rows={4} className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-5 outline-none focus:ring-2 ring-red-500/50 text-sm text-slate-300 resize-none transition-all placeholder:text-slate-800 shadow-inner" />
+      <textarea id={name} name={name} value={value} onChange={onChange} placeholder={placeholder} rows={4} className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-5 outline-none focus:ring-2 ring-red-500/50 text-sm text-slate-300 resize-none transition-all placeholder:text-slate-800 shadow-inner" />
     ) : (
-      <input type={type} name={name} value={value} onChange={onChange} placeholder={placeholder} className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-5 outline-none focus:ring-2 ring-red-500/50 text-sm text-slate-300 transition-all placeholder:text-slate-800 shadow-inner" />
+      <input id={name} type={type} name={name} value={value} onChange={onChange} placeholder={placeholder} className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-5 outline-none focus:ring-2 ring-red-500/50 text-sm text-slate-300 transition-all placeholder:text-slate-800 shadow-inner" />
     )}
   </div>
 );
