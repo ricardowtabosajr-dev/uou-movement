@@ -26,39 +26,66 @@ const App: React.FC = () => {
   const [showApp, setShowApp] = useState(false);
   const [authModal, setAuthModal] = useState<{ open: boolean, mode: 'LOGIN' | 'SIGNUP' }>({ open: false, mode: 'LOGIN' });
 
-  // Verificar sessão existente ao carregar
+  // Verificar sessão existente ao carregar com logs de diagnóstico
   useEffect(() => {
     const initSession = async () => {
+      console.log('--- INICIALIZANDO SESSÃO ---');
+      
+      // Timeout de segurança para não travar a Landing Page se o Supabase estiver lento
+      const sessionTimeout = setTimeout(() => {
+        if (loading) {
+          console.warn('Timeout de 10s atingido na inicialização. Forçando saída do loading.');
+          setLoading(false);
+        }
+      }, 10000);
+
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        console.log('Buscando sessão atual...');
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
-        if (session?.user) {
+        if (sessionError) {
+          console.error('Erro de sessão do Supabase:', sessionError);
+        } else if (session?.user) {
+          console.log(`Usuário detectado: ${session.user.id}. Buscando perfil...`);
           const profile = await getProfile(session.user.id);
           if (profile) {
+            console.log('Perfil carregado com sucesso.');
             setUser(profile);
             setShowApp(true);
+          } else {
+            console.warn('Sessão ativa mas perfil não encontrado.');
           }
+        } else {
+          console.log('Nenhuma sessão ativa encontrada.');
         }
       } catch (err) {
-        console.error('Erro ao restaurar sessão:', err);
+        console.error('Erro crítico ao restaurar sessão:', err);
+      } finally {
+        clearTimeout(sessionTimeout);
+        setLoading(false);
+        console.log('Sessão inicializada.');
       }
-      setLoading(false);
     };
 
     initSession();
 
     // Escutar mudanças de autenticação
     const { data: { subscription } } = onAuthStateChange(async (event, session) => {
+      console.log(`Evento de Autenticação: ${event}`);
       if (event === 'SIGNED_OUT') {
         setUser(null);
         setShowApp(false);
+        setLoading(false);
         setView('DASHBOARD');
       } else if (event === 'SIGNED_IN' && session?.user) {
+        setLoading(true);
+        console.log('Novo login detectado. Carregando perfil...');
         const profile = await getProfile(session.user.id);
         if (profile) {
           setUser(profile);
           setShowApp(true);
         }
+        setLoading(false);
       }
     });
 
