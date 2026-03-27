@@ -26,60 +26,68 @@ const App: React.FC = () => {
   const [showApp, setShowApp] = useState(false);
   const [authModal, setAuthModal] = useState<{ open: boolean, mode: 'LOGIN' | 'SIGNUP' }>({ open: false, mode: 'LOGIN' });
 
-  // Verificar sessão existente ao carregar com logs de diagnóstico
+  // Verificar sessão existente ao carregar
   useEffect(() => {
+    let sessionResolved = false; // Flag para impedir re-trigger do loading
+
     const initSession = async () => {
       console.log('--- INICIALIZANDO SESSÃO ---');
-      
-      // Timeout de segurança para não travar a Landing Page se o Supabase estiver lento
-      const sessionTimeout = setTimeout(() => {
-        if (loading) {
-          console.warn('Timeout de 10s atingido na inicialização. Forçando saída do loading.');
-          setLoading(false);
-        }
-      }, 10000);
 
       try {
         console.log('Buscando sessão atual...');
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (sessionError) {
-          console.error('Erro de sessão do Supabase:', sessionError);
-        } else if (session?.user) {
-          console.log(`Usuário detectado: ${session.user.id}. Buscando perfil...`);
+        if (session?.user && !sessionResolved) {
+          console.log(`Sessão encontrada: ${session.user.id}. Buscando perfil...`);
           const profile = await getProfile(session.user.id);
           if (profile) {
-            console.log('Perfil carregado com sucesso.');
+            console.log('Perfil carregado. Entrando no app.');
             setUser(profile);
             setShowApp(true);
           } else {
-            console.warn('Sessão ativa mas perfil não encontrado.');
+            console.warn('Perfil não encontrado ou timeout. Indo para Landing Page.');
           }
         } else {
-          console.log('Nenhuma sessão ativa encontrada.');
+          console.log('Nenhuma sessão ativa.');
         }
       } catch (err) {
-        console.error('Erro crítico ao restaurar sessão:', err);
+        console.error('Erro ao restaurar sessão:', err);
       } finally {
-        clearTimeout(sessionTimeout);
+        sessionResolved = true;
         setLoading(false);
-        console.log('Sessão inicializada.');
+        console.log('--- SESSÃO INICIALIZADA ---');
       }
     };
 
-    initSession();
+    // Timeout de segurança absoluto: após 8s, força saída do loading
+    const absoluteTimeout = setTimeout(() => {
+      if (!sessionResolved) {
+        console.error('TIMEOUT ABSOLUTO: 8s atingido. Forçando saída.');
+        sessionResolved = true;
+        setLoading(false);
+      }
+    }, 8000);
 
-    // Escutar mudanças de autenticação
+    initSession().finally(() => clearTimeout(absoluteTimeout));
+
+    // Escutar mudanças de autenticação (login/logout DEPOIS da init)
     const { data: { subscription } } = onAuthStateChange(async (event, session) => {
-      console.log(`Evento de Autenticação: ${event}`);
+      console.log(`Evento Auth: ${event} | sessionResolved: ${sessionResolved}`);
+      
       if (event === 'SIGNED_OUT') {
         setUser(null);
         setShowApp(false);
         setLoading(false);
         setView('DASHBOARD');
       } else if (event === 'SIGNED_IN' && session?.user) {
+        // IGNORA se a sessão ainda está sendo inicializada (evita loop)
+        if (!sessionResolved) {
+          console.log('SIGNED_IN ignorado: init ainda em andamento.');
+          return;
+        }
+        // Só recarrega perfil se for um login NOVO (não o da init)
         setLoading(true);
-        console.log('Novo login detectado. Carregando perfil...');
+        console.log('Login novo detectado. Carregando perfil...');
         const profile = await getProfile(session.user.id);
         if (profile) {
           setUser(profile);

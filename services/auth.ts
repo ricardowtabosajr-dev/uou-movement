@@ -119,67 +119,54 @@ export const signOut = async (): Promise<void> => {
 
 /**
  * Busca o perfil de um usuário pelo ID.
+ * Inclui timeout de 5s para evitar que a query fique pendurada eternamente.
  */
-export const getProfile = async (userId: string, retryCount = 0): Promise<UserProfile | null> => {
-  console.log(`[AUTH SERVICE] getProfile(${userId}) - Tentativa: ${retryCount + 1}`);
+export const getProfile = async (userId: string): Promise<UserProfile | null> => {
+  console.log(`[AUTH SERVICE] getProfile(${userId}) - Iniciando...`);
   
-  try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+  // Timeout de 5 segundos - se o Supabase não responder, retorna null
+  const timeoutPromise = new Promise<null>((resolve) => {
+    setTimeout(() => {
+      console.error('[AUTH SERVICE] TIMEOUT: Supabase não respondeu em 5s. Retornando null.');
+      resolve(null);
+    }, 5000);
+  });
 
-    if (error) {
-      console.warn(`[AUTH SERVICE] Erro ao buscar perfil:`, error.message);
-      
-      // Se não encontrar o perfil (PGRST116), criamos um perfil básico emergencial
-      if (error.code === 'PGRST116') {
-        console.log('[AUTH SERVICE] Perfil não encontrado no banco. Criando perfil emergencial...');
-        const email = (await supabase.auth.getUser()).data.user?.email || 'desconhecido@uou.com';
-        const newProfile: UserProfile = {
-          id: userId,
-          name: email.split('@')[0].toUpperCase(),
-          email: email,
-          role: email.includes('admin') ? UserRole.ADMIN : UserRole.USER,
-          enrollmentStatus: EnrollmentStatus.PENDING,
-          paymentStatus: PaymentStatus.UNPAID,
-          avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(userId)}&backgroundColor=991b1b`,
-          briefingCompleted: false,
-        };
-        
-        // Tenta salvar o perfil emergencial (opcional, pode falhar mas queremos o objeto pro App)
-        supabase.from('profiles').upsert(newProfile).then(({error}) => {
-          if (error) console.error('[AUTH SERVICE] Falha ao persistir perfil emergencial:', error.message);
-          else console.log('[AUTH SERVICE] Perfil emergencial persistido.');
-        });
-        
-        return newProfile;
+  const queryPromise = (async (): Promise<UserProfile | null> => {
+    try {
+      console.log('[AUTH SERVICE] Enviando query para profiles...');
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      console.log('[AUTH SERVICE] Query retornou. Error:', error?.message || 'nenhum', 'Data:', data ? 'ok' : 'null');
+
+      if (error || !data) {
+        console.warn('[AUTH SERVICE] Perfil não encontrado ou erro:', error?.message);
+        return null;
       }
+
+      console.log('[AUTH SERVICE] Perfil carregado com sucesso.');
+      return {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        role: data.role as UserRole,
+        enrollmentStatus: data.enrollment_status as EnrollmentStatus,
+        paymentStatus: data.payment_status as PaymentStatus,
+        avatarUrl: data.avatar_url,
+        briefingCompleted: data.briefing_completed,
+        missionId: data.mission_id,
+      };
+    } catch (err) {
+      console.error('[AUTH SERVICE] Exceção em getProfile:', err);
       return null;
     }
+  })();
 
-    if (!data) {
-      console.warn('[AUTH SERVICE] getProfile retornou data null sem erro.');
-      return null;
-    }
-
-    console.log('[AUTH SERVICE] Perfil carregado com sucesso.');
-    return {
-      id: data.id,
-      name: data.name,
-      email: data.email,
-      role: data.role as UserRole,
-      enrollmentStatus: data.enrollment_status as EnrollmentStatus,
-      paymentStatus: data.payment_status as PaymentStatus,
-      avatarUrl: data.avatar_url,
-      briefingCompleted: data.briefing_completed,
-      missionId: data.mission_id,
-    };
-  } catch (err) {
-    console.error('[AUTH SERVICE] Exceção em getProfile:', err);
-    return null;
-  }
+  return Promise.race([queryPromise, timeoutPromise]);
 };
 
 /**
