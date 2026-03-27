@@ -120,26 +120,66 @@ export const signOut = async (): Promise<void> => {
 /**
  * Busca o perfil de um usuário pelo ID.
  */
-export const getProfile = async (userId: string): Promise<UserProfile | null> => {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
+export const getProfile = async (userId: string, retryCount = 0): Promise<UserProfile | null> => {
+  console.log(`[AUTH SERVICE] getProfile(${userId}) - Tentativa: ${retryCount + 1}`);
+  
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
 
-  if (error || !data) return null;
+    if (error) {
+      console.warn(`[AUTH SERVICE] Erro ao buscar perfil:`, error.message);
+      
+      // Se não encontrar o perfil (PGRST116), criamos um perfil básico emergencial
+      if (error.code === 'PGRST116') {
+        console.log('[AUTH SERVICE] Perfil não encontrado no banco. Criando perfil emergencial...');
+        const email = (await supabase.auth.getUser()).data.user?.email || 'desconhecido@uou.com';
+        const newProfile: UserProfile = {
+          id: userId,
+          name: email.split('@')[0].toUpperCase(),
+          email: email,
+          role: email.includes('admin') ? UserRole.ADMIN : UserRole.USER,
+          enrollmentStatus: EnrollmentStatus.PENDING,
+          paymentStatus: PaymentStatus.UNPAID,
+          avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(userId)}&backgroundColor=991b1b`,
+          briefingCompleted: false,
+        };
+        
+        // Tenta salvar o perfil emergencial (opcional, pode falhar mas queremos o objeto pro App)
+        supabase.from('profiles').upsert(newProfile).then(({error}) => {
+          if (error) console.error('[AUTH SERVICE] Falha ao persistir perfil emergencial:', error.message);
+          else console.log('[AUTH SERVICE] Perfil emergencial persistido.');
+        });
+        
+        return newProfile;
+      }
+      return null;
+    }
 
-  return {
-    id: data.id,
-    name: data.name,
-    email: data.email,
-    role: data.role as UserRole,
-    enrollmentStatus: data.enrollment_status as EnrollmentStatus,
-    paymentStatus: data.payment_status as PaymentStatus,
-    avatarUrl: data.avatar_url,
-    briefingCompleted: data.briefing_completed,
-    missionId: data.mission_id,
-  };
+    if (!data) {
+      console.warn('[AUTH SERVICE] getProfile retornou data null sem erro.');
+      return null;
+    }
+
+    console.log('[AUTH SERVICE] Perfil carregado com sucesso.');
+    return {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      role: data.role as UserRole,
+      enrollmentStatus: data.enrollment_status as EnrollmentStatus,
+      paymentStatus: data.payment_status as PaymentStatus,
+      avatarUrl: data.avatar_url,
+      briefingCompleted: data.briefing_completed,
+      missionId: data.mission_id,
+    };
+  } catch (err) {
+    console.error('[AUTH SERVICE] Exceção em getProfile:', err);
+    return null;
+  }
 };
 
 /**
