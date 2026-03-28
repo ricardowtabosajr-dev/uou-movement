@@ -124,12 +124,12 @@ export const signOut = async (): Promise<void> => {
 export const getProfile = async (userId: string): Promise<UserProfile | null> => {
   console.log(`[AUTH SERVICE] getProfile(${userId}) - Iniciando...`);
   
-  // Timeout de 5 segundos - se o Supabase não responder, retorna null
+  // Timeout de 12 segundos - se o Supabase não responder, retorna null
   const timeoutPromise = new Promise<null>((resolve) => {
     setTimeout(() => {
-      console.error('[AUTH SERVICE] TIMEOUT: Supabase não respondeu em 5s. Retornando null.');
+      console.error('[AUTH SERVICE] TIMEOUT: Supabase não respondeu em 12s. Retornando null.');
       resolve(null);
-    }, 5000);
+    }, 12000);
   });
 
   const queryPromise = (async (): Promise<UserProfile | null> => {

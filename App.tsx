@@ -70,14 +70,14 @@ const App: React.FC = () => {
       }
     };
 
-    // Timeout de segurança absoluto: após 8s, força saída do loading
+    // Timeout de segurança absoluto: após 20s, força saída do loading
     const absoluteTimeout = setTimeout(() => {
       if (!sessionResolved) {
-        console.error('TIMEOUT ABSOLUTO: 8s atingido. Forçando saída.');
+        console.error('TIMEOUT ABSOLUTO: 20s atingido. Forçando saída.');
         sessionResolved = true;
         setLoading(false);
       }
-    }, 8000);
+    }, 20000);
 
     initSession().finally(() => clearTimeout(absoluteTimeout));
 
