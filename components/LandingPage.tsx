@@ -42,7 +42,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterAdmin, onEnterUser }) 
   const historicalActions = [
     { year: "2023", name: "Missão Nordeste", impact: "500+ famílias alcançadas", img: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80" },
     { year: "2022", name: "Impacto Transcontinental", impact: "Fronteiras rompidas", img: "https://images.unsplash.com/photo-1526772662000-3f88f10405ff?auto=format&fit=crop&q=80" },
-    { year: "2021", name: "Chamado Underground", impact: "Treinamento intensivo", img: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80" },
+    { year: "2021", name: "Chamado Underground", impact: "Treinamento intensivo", img: "/mission-banner.jpg" },
   ];
 
   const flags = [
@@ -101,7 +101,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterAdmin, onEnterUser }) 
 
       {/* Hero Section - Refined for Proportionality */}
       <section className="relative pt-32 pb-20 md:pt-52 md:pb-40 overflow-hidden flex items-center justify-center min-h-[90vh]">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1510252119330-1c9f2801458e?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-10 grayscale scale-110 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-[url('/mission-banner.jpg')] bg-cover bg-center opacity-20 scale-110 pointer-events-none"></div>
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-950/40 to-slate-950"></div>
         
         <div className="relative z-10 max-w-5xl mx-auto px-6 text-center space-y-8">

@@ -187,7 +187,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ user, onStartEnrollment, 
             ) : null}
           </div>
           <div className="hidden lg:block">
-            <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80" className="rounded-xl shadow-2xl border border-slate-700 h-64 w-full object-cover grayscale" alt="Mission" />
+            <img src="/mission-banner.jpg" className="rounded-xl shadow-2xl border border-slate-700 h-64 w-full object-cover" alt="Mission" />
           </div>
         </div>
       </div>
