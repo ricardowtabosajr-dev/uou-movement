@@ -56,6 +56,7 @@ export interface EnrollmentData {
   // Dados do Responsável (para menores de 18)
   guardianName?: string;
   guardianPhone?: string;
+  guardianCpf?: string;
   
   // Base de Contato
   phone: string;

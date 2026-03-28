@@ -63,7 +63,11 @@ Comprometo-me a manter sigilo absoluto sobre locais, protocolos de segurança e 
 Autorizo a equipe do UOU MOVEMENT a tomar providências médicas de emergência em meu nome, incluindo transporte e atendimento hospitalar.
 
 Contato de Emergência: ${data.emergencyContact || '[Não informado]'} - ${data.emergencyPhone || '[Não informado]'}
-
+${data.guardianName ? `
+7. AUTORIZAÇÃO DO RESPONSÁVEL LEGAL
+Eu, ${data.guardianName}, portador(a) do CPF ${data.guardianCpf || '[CPF do Responsável]'}, na qualidade de responsável legal pelo(a) menor ${data.fullName}, autorizo sua participação no programa "Chamado UOU MOVEMENT", assumindo ciência integral dos riscos descritos neste termo.
+Telefone do Responsável: ${data.guardianPhone || '[Não informado]'}
+` : ''}
 Ao aceitar este termo, declaro ter lido e compreendido todas as cláusulas acima, aceitando integralmente as condições estabelecidas.
 
 Data: ${new Date().toLocaleDateString('pt-BR')}
@@ -122,6 +126,7 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, price, onComplete
     shirtSize: '',
     guardianName: '',
     guardianPhone: '',
+    guardianCpf: '',
     phone: '',
     instagram: '',
     address: '',
@@ -255,20 +260,18 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, price, onComplete
   const handleNext = async () => {
     if (step === 1) {
       if (!videoBlob) {
-        alert("Para prosseguir, realize o vídeo de identificação.");
+        alert("Para prosseguir, realize o video de identificacao.");
         return;
       }
-      if (isMinor && (!formData.guardianName || !formData.guardianPhone)) {
-        alert("Recrutas menores de 18 anos devem preencher os dados do responsável e um telefone válido.");
+      if (isMinor && (!formData.guardianName || !formData.guardianPhone || !formData.guardianCpf)) {
+        alert("Recrutas menores de 18 anos devem preencher nome, CPF e telefone do responsavel legal.");
         return;
       }
     }
-
     if (step === 4) {
       setLoading(true);
       try {
         const term = await generateConsentTerm(formData);
-        // generateConsentTerm retorna string de erro em vez de lançar exceção
         if (term && !term.startsWith('Erro') && !term.startsWith('Configuração')) {
           setConsentTerm(term);
         } else {
@@ -621,8 +624,9 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, price, onComplete
                       <p className="text-[10px] font-medium text-slate-500 uppercase">Obrigatório para recrutas com menos de 18 anos</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <InputGroup label="Nome do Responsável" name="guardianName" value={formData.guardianName} onChange={handleChange} placeholder="Nome completo do pai, mãe ou tutor" />
+                    <InputGroup label="CPF do Responsável" name="guardianCpf" value={formData.guardianCpf} onChange={handleChange} placeholder="000.000.000-00" />
                     <InputGroup label="Telefone do Responsável" name="guardianPhone" value={formData.guardianPhone} onChange={handleChange} placeholder="(00) 00000-0000" icon={<Smartphone size={14} />} />
                   </div>
                 </div>
@@ -1029,7 +1033,7 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, price, onComplete
                   {!videoBlob ? "Vídeo Obrigatório" : "Dados do Responsável Obrigatórios"}
                 </div>
               )}
-              <button onClick={handleNext} disabled={loading || (step === 5 && (!formData.agreedToTerms || !signatureDataUrl)) || (step === 1 && !videoBlob) || (step === 1 && isMinor && (!formData.guardianName || !formData.guardianPhone))} className="flex items-center gap-4 bg-red-700 hover:bg-red-600 disabled:opacity-20 px-14 py-6 rounded-2xl font-black uppercase tracking-widest transition-all shadow-2xl text-sm hover:scale-[1.02]">
+              <button onClick={handleNext} disabled={loading || (step === 5 && (!formData.agreedToTerms || !signatureDataUrl)) || (step === 1 && !videoBlob) || (step === 1 && isMinor && (!formData.guardianName || !formData.guardianPhone || !formData.guardianCpf))} className="flex items-center gap-4 bg-red-700 hover:bg-red-600 disabled:opacity-20 px-14 py-6 rounded-2xl font-black uppercase tracking-widest transition-all shadow-2xl text-sm hover:scale-[1.02]">
                 {loading ? 'Processando...' : 'Avançar'} <ArrowRight size={22} />
               </button>
             </div>
