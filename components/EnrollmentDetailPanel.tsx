@@ -6,7 +6,7 @@ import {
   X, User, MapPin, Church, Activity, ShieldCheck,
   Phone, Mail, Instagram, Download, FileText,
   Video, Loader2, AlertCircle, CheckCircle, XCircle,
-  Heart, Shirt, Globe, Droplet, FileDown
+  Heart, Shirt, Globe, Droplet, FileDown, Trash2
 } from 'lucide-react';
 
 interface EnrollmentDetailPanelProps {
