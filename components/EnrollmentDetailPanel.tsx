@@ -6,7 +6,7 @@ import {
   X, User, MapPin, Church, Activity, ShieldCheck,
   Phone, Mail, Instagram, Download, FileText,
   Video, Loader2, AlertCircle, CheckCircle, XCircle,
-  Heart, Shirt, Globe, Droplet, Printer
+  Heart, Shirt, Globe, Droplet, FileDown
 } from 'lucide-react';
 
 interface EnrollmentDetailPanelProps {
@@ -77,8 +77,164 @@ const EnrollmentDetailPanel: React.FC<EnrollmentDetailPanelProps> = ({ user, onC
     loadData();
   }, [user.id]);
 
-  const handlePrint = () => {
-    window.print();
+  const handleGeneratePDF = () => {
+    if (!enrollment) return;
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const styles = `
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono&display=swap');
+      body { 
+        font-family: 'Inter', sans-serif; 
+        color: #0f172a; 
+        line-height: 1.5; 
+        padding: 40px;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 20px; margin-bottom: 30px; }
+      .header h1 { margin: 0; font-weight: 900; font-size: 32px; letter-spacing: -1px; text-transform: uppercase; }
+      .header p { margin: 5px 0 0; font-weight: 700; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #64748b; }
+      
+      .user-profile { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; }
+      .user-profile img { width: 80px; height: 80px; border-radius: 15px; border: 2px solid #e2e8f0; }
+      .user-profile h2 { margin: 0; font-size: 24px; font-weight: 900; }
+      .user-profile p { margin: 2px 0; color: #64748b; font-size: 14px; }
+
+      .section { margin-bottom: 25px; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; page-break-inside: avoid; }
+      .section-title { background: #f8fafc; padding: 10px 20px; border-bottom: 1px solid #e2e8f0; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: #475569; }
+      .section-content { padding: 15px 20px; display: grid; grid-template-cols: 1fr 1fr; gap: 15px; }
+      
+      .field { margin-bottom: 10px; }
+      .field-label { font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; margin-bottom: 2px; }
+      .field-value { font-size: 13px; font-weight: 600; color: #1e293b; }
+      .full-width { grid-column: span 2; }
+
+      .consent-term { 
+        margin-top: 40px; 
+        padding-top: 30px; 
+        border-top: 1px dashed #cbd5e1; 
+        font-family: 'JetBrains Mono', monospace; 
+        font-size: 11px; 
+        color: #475569; 
+        white-space: pre-wrap;
+        line-height: 1.6;
+      }
+      .footer { margin-top: 50px; text-align: center; font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+      
+      @media print {
+        body { padding: 0; }
+        .no-print { display: none; }
+      }
+    `;
+
+    const sections = [
+      {
+        title: 'Identidade',
+        fields: [
+          { label: 'Nome Completo', value: enrollment.full_name },
+          { label: 'Apelido', value: enrollment.nickname },
+          { label: 'CPF', value: enrollment.cpf },
+          { label: 'RG', value: enrollment.rg },
+          { label: 'Data de Nascimento', value: enrollment.birth_date },
+          { label: 'Gênero', value: enrollment.gender },
+          { label: 'Estado Civil', value: enrollment.marital_status },
+          { label: 'Tamanho Camisa', value: enrollment.shirt_size }
+        ]
+      },
+      {
+        title: 'Contato & Localização',
+        fields: [
+          { label: 'Telefone', value: enrollment.phone },
+          { label: 'Instagram', value: enrollment.instagram },
+          { label: 'Endereço', value: enrollment.address, full: true },
+          { label: 'Bairro', value: enrollment.neighborhood },
+          { label: 'Cidade', value: enrollment.city },
+          { label: 'CEP', value: enrollment.cep }
+        ]
+      },
+      {
+        title: 'Perfil Espiritual',
+        fields: [
+          { label: 'Igreja', value: enrollment.church_name },
+          { label: 'Pastor', value: enrollment.pastor_name },
+          { label: 'Dons Espirituais', value: enrollment.spiritual_gifts, full: true },
+          { label: 'Experiência Missionária', value: enrollment.missionary_experience, full: true },
+          { label: 'Motivação', value: enrollment.motivation, full: true }
+        ]
+      },
+      {
+        title: 'Saúde',
+        fields: [
+          { label: 'Tipo Sanguíneo', value: enrollment.blood_type },
+          { label: 'Contato Emergência', value: enrollment.emergency_contact },
+          { label: 'Telefone Emergência', value: enrollment.emergency_phone },
+          { label: 'Condições de Saúde', value: enrollment.health_conditions, full: true },
+          { label: 'Medicamentos', value: enrollment.medications, full: true }
+        ]
+      }
+    ];
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Dossiê - ${user.name}</title>
+          <style>${styles}</style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>UOU MOVEMENT</h1>
+            <p>Dossiê Oficial de Recrutamento - Chamado 2024</p>
+          </div>
+
+          <div class="user-profile">
+            <img src="${user.avatarUrl}" alt="">
+            <div>
+              <h2>${user.name.toUpperCase()}</h2>
+              <p>${user.email}</p>
+              <p>ID: ${user.id.substring(0, 8).toUpperCase()}</p>
+            </div>
+          </div>
+
+          ${sections.map(section => `
+            <div class="section">
+              <div class="section-title">${section.title}</div>
+              <div class="section-content">
+                ${section.fields.map(f => f.value ? `
+                  <div class="field ${f.full ? 'full-width' : ''}">
+                    <div class="field-label">${f.label}</div>
+                    <div class="field-value">${f.value}</div>
+                  </div>
+                ` : '').join('')}
+              </div>
+            </div>
+          `).join('')}
+
+          ${enrollment.consent_term ? `
+            <div class="consent-term">
+              <div style="font-weight: 900; margin-bottom: 15px; font-family: 'Inter', sans-serif; font-size: 14px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">TERMO DE RESPONSABILIDADE</div>
+              ${enrollment.consent_term}
+            </div>
+          ` : ''}
+
+          <div class="footer">
+            Gerado em ${new Date().toLocaleString('pt-BR')} • UOU Movement Platform
+          </div>
+
+          <script>
+            window.onload = () => {
+              window.print();
+              // window.close(); // Opcional: fechar após imprimir
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
   };
 
   const getStatusBadge = (status?: EnrollmentStatus) => {
@@ -131,11 +287,11 @@ const EnrollmentDetailPanel: React.FC<EnrollmentDetailPanelProps> = ({ user, onC
             <h3 className="text-lg font-black uppercase tracking-tight">Dossiê do Participante</h3>
             <div className="flex gap-2">
               <button 
-                onClick={handlePrint}
-                className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-all border border-slate-700 flex items-center gap-2"
+                onClick={handleGeneratePDF}
+                className="p-2.5 bg-red-700 hover:bg-red-600 text-white rounded-xl transition-all shadow-lg shadow-red-900/20 flex items-center gap-2 border border-red-800"
               >
-                <Printer size={18} />
-                <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Imprimir</span>
+                <FileDown size={18} />
+                <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Gerar PDF</span>
               </button>
               <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-xl text-slate-400 transition-colors">
                 <X size={20} />
