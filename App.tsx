@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { UserRole, UserProfile, EnrollmentStatus, PaymentStatus, EnrollmentData } from './types';
 import { supabase } from './services/supabase';
 import { getProfile, updateProfile, getAllProfiles, signOut, onAuthStateChange } from './services/auth';
-import { saveEnrollment, createPayment, uploadIdentityVideo, deleteUserData } from './services/database';
+import { saveEnrollment, createPayment, uploadIdentityVideo, deleteUserData, getMissions, getAllPayments, MissionDB, PaymentDB } from './services/database';
 import Sidebar from './components/Sidebar';
 import AdminDashboard from './components/AdminDashboard';
 import UserDashboard from './components/UserDashboard';
@@ -20,6 +20,8 @@ type AppView = 'DASHBOARD' | 'ENROLLMENT' | 'USERS' | 'MISSIONS' | 'PAYMENTS' | 
 const App: React.FC = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [enrollments, setEnrollments] = useState<UserProfile[]>([]);
+  const [missions, setMissions] = useState<MissionDB[]>([]);
+  const [payments, setPayments] = useState<PaymentDB[]>([]);
   const [view, setView] = useState<AppView>('DASHBOARD');
   const [loading, setLoading] = useState(true);
   const [loadingMessage, setLoadingMessage] = useState('');
@@ -102,16 +104,23 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // Carregar lista de inscrições (para admin)
+  // Carregar dados administrativos
   useEffect(() => {
     if (user?.role === UserRole.ADMIN) {
-      loadEnrollments();
+      loadAdminData();
     }
   }, [user?.role]);
 
-  const loadEnrollments = async () => {
-    const profiles = await getAllProfiles();
+  const loadAdminData = async () => {
+    const [profiles, missionsList, paymentsList] = await Promise.all([
+      getAllProfiles(),
+      getMissions(),
+      getAllPayments()
+    ]);
+    
     setEnrollments(profiles.filter(p => p.role === UserRole.USER));
+    setMissions(missionsList);
+    setPayments(paymentsList);
   };
 
   const handleLogout = async () => {
@@ -227,7 +236,7 @@ const App: React.FC = () => {
       await updateProfile(user.id, { role: newRole });
       setUser({ ...user, role: newRole });
       if (newRole === UserRole.ADMIN) {
-        await loadEnrollments();
+        await loadAdminData();
       }
     } catch (err: any) {
       alert("Erro ao alterar privilégios no servidor.");
@@ -304,7 +313,7 @@ const App: React.FC = () => {
     switch (view) {
       case 'DASHBOARD':
         return user?.role === UserRole.ADMIN ? (
-          <AdminDashboard enrollments={enrollments} />
+          <AdminDashboard enrollments={enrollments} missions={missions} payments={payments} />
         ) : (
           <>
             <UserDashboard 

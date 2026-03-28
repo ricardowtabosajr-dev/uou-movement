@@ -5,28 +5,80 @@ import {
 } from 'recharts';
 import { Users, Target, TrendingUp, AlertCircle, Sparkles, ChevronRight } from 'lucide-react';
 import { UserProfile, EnrollmentStatus, PaymentStatus } from '../types';
+import { MissionDB, PaymentDB } from '../services/database';
 
-const data = [
-  { name: 'Jan', inscritos: 40, pagos: 24 },
-  { name: 'Fev', inscritos: 30, pagos: 13 },
-  { name: 'Mar', inscritos: 20, pagos: 98 },
-  { name: 'Abr', inscritos: 27, pagos: 39 },
-  { name: 'Mai', inscritos: 18, pagos: 48 },
-  { name: 'Jun', inscritos: 23, pagos: 38 },
-  { name: 'Jul', inscritos: 34, pagos: 43 },
-];
+// Dados estáticos para o gráfico como fallback (agora computados dinamicamente no componente)
+const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
 interface AdminDashboardProps {
   enrollments?: UserProfile[];
+  missions?: MissionDB[];
+  payments?: PaymentDB[];
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ enrollments = [] }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
+  enrollments = [], 
+  missions = [], 
+  payments = [] 
+}) => {
+  // Cálculos Reais
+  const totalInscritos = enrollments.length;
+  const missoesAtivas = missions.filter(m => m.status === 'OPEN' || m.status === 'IN_PROGRESS').length;
+  const arrecadacaoTotal = payments
+    .filter(p => p.status === 'PAID')
+    .reduce((sum, p) => sum + p.amount, 0);
+  const pendencias = enrollments.filter(e => 
+    e.enrollmentStatus === EnrollmentStatus.PENDING || 
+    e.enrollmentStatus === EnrollmentStatus.REVIEWING ||
+    e.paymentStatus === PaymentStatus.PENDING
+  ).length;
+
+  // Gerar dados para o gráfico baseados em dados reais (Simplificado para os últimos 6 meses)
+  const currentMonth = new Date().getMonth();
+  const chartData = Array.from({ length: 6 }).map((_, i) => {
+    const monthIdx = (currentMonth - 5 + i + 12) % 12;
+    return {
+      name: months[monthIdx],
+      inscritos: Math.round(totalInscritos / (6 - i)), // Estimativa suave baseada no total
+      pagos: Math.round(payments.filter(p => p.status === 'PAID').length / (6 - i))
+    };
+  });
+
   const stats = [
-    { label: 'Total Inscritos', value: (450 + enrollments.length).toString(), icon: Users, color: 'blue', change: '+12%' },
-    { label: 'Missões Ativas', value: '08', icon: Target, color: 'red', change: 'Estável' },
-    { label: 'Arrecadação', value: `R$ ${(84 + (enrollments.filter(e => e.paymentStatus === PaymentStatus.PAID).length * 0.5)).toFixed(1)}k`, icon: TrendingUp, color: 'emerald', change: '+24%' },
-    { label: 'Pendências', value: (15 + enrollments.filter(e => e.paymentStatus === PaymentStatus.UNPAID).length).toString(), icon: AlertCircle, color: 'amber', change: '-5%' },
+    { 
+      label: 'Total Inscritos', 
+      value: totalInscritos.toString(), 
+      icon: Users, 
+      color: 'blue', 
+      change: enrollments.length > 0 ? '+Real' : '0%' 
+    },
+    { 
+      label: 'Missões Ativas', 
+      value: missoesAtivas.toString().padStart(2, '0'), 
+      icon: Target, 
+      color: 'red', 
+      change: 'Em Campo' 
+    },
+    { 
+      label: 'Arrecadação', 
+      value: `R$ ${(arrecadacaoTotal / 1000).toFixed(1)}k`, 
+      icon: TrendingUp, 
+      color: 'emerald', 
+      change: 'Total Pago' 
+    },
+    { 
+      label: 'Pendências', 
+      value: pendencias.toString(), 
+      icon: AlertCircle, 
+      color: 'amber', 
+      change: 'Ação Requerida' 
+    },
   ];
+
+  // Cálculo de Metas do Trimestre
+  const metaArrecadacao = Math.min(Math.round((arrecadacaoTotal / 50000) * 100), 100); // Meta de 50k
+  const totalVagas = missions.reduce((sum, m) => sum + m.capacity, 0);
+  const preenchimentoVagas = totalVagas > 0 ? Math.min(Math.round((totalInscritos / totalVagas) * 100), 100) : 0;
 
   const getStatusColor = (status?: EnrollmentStatus) => {
     switch (status) {
@@ -82,7 +134,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ enrollments = [] }) => 
             </div>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data}>
+                <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="colorInscritos" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
@@ -135,7 +187,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ enrollments = [] }) => 
                           {user.enrollmentStatus}
                         </span>
                      </td>
-                     <td className="px-6 py-4 text-sm text-slate-300">Vale da Decisão 2024</td>
+                     <td className="px-6 py-4 text-sm text-slate-300">
+                        {missions.find(m => m.id === user.missionId)?.title || 'Chamado Geral'}
+                     </td>
                      <td className="px-6 py-4">
                         <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${getPaymentColor(user.paymentStatus)}`}>
                           {user.paymentStatus}
@@ -152,26 +206,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ enrollments = [] }) => 
         <div className="space-y-6">
           <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl">
              <h3 className="font-bold mb-4">Metas do Trimestre</h3>
-             <div className="space-y-4">
-               <div>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-slate-400">Arrecadação</span>
-                    <span className="text-emerald-500 font-bold">84%</span>
-                  </div>
-                  <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                    <div className="bg-emerald-500 h-full" style={{ width: '84%' }}></div>
-                  </div>
-               </div>
-               <div>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-slate-400">Preenchimento Vagas</span>
-                    <span className="text-red-500 font-bold">62%</span>
-                  </div>
-                  <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                    <div className="bg-red-500 h-full" style={{ width: '62%' }}></div>
-                  </div>
-               </div>
-             </div>
+             <div className="space-y-6">
+              <div>
+                <div className="flex justify-between text-xs font-bold mb-2">
+                  <span className="text-slate-400 uppercase tracking-widest">Arrecadação</span>
+                  <span className="text-emerald-500 font-mono">{metaArrecadacao}%</span>
+                </div>
+                <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div className="h-full bg-emerald-500 rounded-full transition-all duration-1000" style={{ width: `${metaArrecadacao}%` }}></div>
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-xs font-bold mb-2">
+                  <span className="text-slate-400 uppercase tracking-widest">Preenchimento Vagas</span>
+                  <span className="text-red-500 font-mono">{preenchimentoVagas}%</span>
+                </div>
+                <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div className="h-full bg-red-500 rounded-full transition-all duration-1000" style={{ width: `${preenchimentoVagas}%` }}></div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
