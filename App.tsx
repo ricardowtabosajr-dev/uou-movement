@@ -30,7 +30,7 @@ const App: React.FC = () => {
   const [payments, setPayments] = useState<PaymentDB[]>([]);
   const [registrationPrice, setRegistrationPrice] = useState(() => {
     const saved = localStorage.getItem('uou_registration_price');
-    return saved ? parseFloat(saved) : 1250.00;
+    return saved ? parseFloat(saved) : 500.00;
   });
 
   useEffect(() => {
