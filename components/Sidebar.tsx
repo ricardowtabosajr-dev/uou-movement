@@ -42,7 +42,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeView, onViewChange, onLog
     { id: 'REPORTS', icon: BarChart3, label: 'Relatórios' },
   ] : [
     { id: 'DASHBOARD', icon: LayoutDashboard, label: 'Minha Jornada' },
-    { id: 'ENROLLMENT', icon: ClipboardCheck, label: 'Inscrição', locked: !user.briefingCompleted || hasEnrolled, completed: hasEnrolled },
+    { id: 'ENROLLMENT', icon: ClipboardCheck, label: 'Inscrição', locked: !user.briefingCompleted || hasEnrolled, completed: user.briefingCompleted && hasEnrolled },
     { id: 'MISSION_INFO', icon: Target, label: 'Sobre a Missão', locked: !user.briefingCompleted },
     { id: 'PAYMENT_HISTORY', icon: CreditCard, label: 'Pagamentos', locked: !user.briefingCompleted },
   ];
