@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { UserProfile, UserRole } from '../types';
+import { UserProfile, UserRole, EnrollmentStatus } from '../types';
 import { 
   LayoutDashboard, 
   ClipboardCheck, 
@@ -14,7 +14,8 @@ import {
   Menu,
   X,
   RefreshCw,
-  Lock
+  Lock,
+  CheckCircle
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -29,6 +30,10 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ user, activeView, onViewChange, onLogout, onToggleRole, className = '' }) => {
   const [isOpen, setIsOpen] = React.useState(false);
 
+  const hasEnrolled = user.enrollmentStatus === EnrollmentStatus.PENDING 
+    || user.enrollmentStatus === EnrollmentStatus.REVIEWING 
+    || user.enrollmentStatus === EnrollmentStatus.APPROVED;
+
   const menuItems = user.role === UserRole.ADMIN ? [
     { id: 'DASHBOARD', icon: LayoutDashboard, label: 'Resumo' },
     { id: 'USERS', icon: Users, label: 'Participantes' },
@@ -37,7 +42,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeView, onViewChange, onLog
     { id: 'REPORTS', icon: BarChart3, label: 'Relatórios' },
   ] : [
     { id: 'DASHBOARD', icon: LayoutDashboard, label: 'Minha Jornada' },
-    { id: 'ENROLLMENT', icon: ClipboardCheck, label: 'Inscrição', locked: !user.briefingCompleted },
+    { id: 'ENROLLMENT', icon: ClipboardCheck, label: 'Inscrição', locked: !user.briefingCompleted || hasEnrolled, completed: hasEnrolled },
     { id: 'MISSION_INFO', icon: Target, label: 'Sobre a Missão', locked: !user.briefingCompleted },
     { id: 'PAYMENT_HISTORY', icon: CreditCard, label: 'Pagamentos', locked: !user.briefingCompleted },
   ];
@@ -52,7 +57,9 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeView, onViewChange, onLog
         setIsOpen(false);
       }}
       className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 ${
-        item.locked 
+        item.locked && item.completed
+          ? 'opacity-60 cursor-not-allowed'
+          : item.locked 
           ? 'opacity-40 cursor-not-allowed grayscale' 
           : activeView === item.id 
           ? 'bg-red-900/20 text-red-500 border border-red-900/30 shadow-inner' 
@@ -63,7 +70,14 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeView, onViewChange, onLog
         <item.icon size={20} />
         <span className="font-medium">{item.label}</span>
       </div>
-      {item.locked && <Lock size={14} className="text-slate-600" />}
+      {item.completed ? (
+        <span className="flex items-center gap-1 text-emerald-500">
+          <CheckCircle size={14} />
+          <span className="text-[9px] font-black uppercase tracking-widest">Concluída</span>
+        </span>
+      ) : item.locked ? (
+        <Lock size={14} className="text-slate-600" />
+      ) : null}
     </button>
   );
 
