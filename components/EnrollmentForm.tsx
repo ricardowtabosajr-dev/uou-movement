@@ -72,10 +72,11 @@ Local: ${data.city || '[Cidade]'} - ${data.state || '[Estado]'}`;
 
 interface EnrollmentFormProps {
   user: UserProfile;
+  price: number;
   onComplete: (data: EnrollmentData, paymentMethod: string, videoBlob: Blob, consentTerm?: string) => void;
 }
 
-const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => {
+const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, price, onComplete }) => {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -627,6 +628,18 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
                 Para finalizar sua inscrição, confirme a situação do seu pagamento abaixo.
               </p>
             </header>
+
+            {/* Valor da Inscrição */}
+            <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl text-center shadow-xl shadow-black/20">
+               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2">Valor Total do Chamado</p>
+               <h3 className="text-5xl font-black text-white tracking-tighter">
+                 <span className="text-red-600 text-2xl mr-1">R$</span> {price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+               </h3>
+               <div className="flex justify-center gap-1.5 mt-4">
+                  <ShieldCheck size={14} className="text-emerald-500" />
+                  <p className="text-[9px] font-black uppercase tracking-widest text-emerald-500/80">Inscrição Validada via IA</p>
+               </div>
+            </div>
 
             {/* Pergunta: Já realizou o pagamento? */}
             <div className="space-y-4">

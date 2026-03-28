@@ -1,14 +1,24 @@
 
 import React, { useState, useEffect } from 'react';
 import { UserProfile, PaymentStatus } from '../types';
-import { DollarSign, ArrowUpRight, ArrowDownRight, CreditCard, Landmark, QrCode, X, Save, CheckCircle2, ShieldCheck, AlertCircle } from 'lucide-react';
+import { PaymentDB } from '../services/database';
+import { DollarSign, ArrowUpRight, ArrowDownRight, CreditCard, Landmark, QrCode, X, Save, CheckCircle2, ShieldCheck, AlertCircle, Edit3 } from 'lucide-react';
 
 interface PaymentsManagementProps {
   enrollments: UserProfile[];
+  payments?: PaymentDB[];
+  price: number;
+  onPriceChange?: (newPrice: number) => void;
   isUserMode?: boolean;
 }
 
-const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ enrollments, isUserMode = false }) => {
+const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ 
+  enrollments, 
+  payments = [],
+  price,
+  onPriceChange,
+  isUserMode = false 
+}) => {
   const [pixKey, setPixKey] = useState(() => localStorage.getItem('uou_pix_key') || '');
   const [pixQRCode, setPixQRCode] = useState(() => localStorage.getItem('uou_pix_qr') || '');
   const [stripeEnabled, setStripeEnabled] = useState(() => localStorage.getItem('uou_stripe_status') === 'enabled');
@@ -16,13 +26,26 @@ const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ enrollments, is
   const [showPixModal, setShowPixModal] = useState(false);
   const [showStripeModal, setShowStripeModal] = useState(false);
   const [showLinkModal, setShowLinkModal] = useState(false);
+  const [showPriceModal, setShowPriceModal] = useState(false);
   const [showUserPixModal, setShowUserPixModal] = useState(false);
   const [tempPixKey, setTempPixKey] = useState(pixKey);
   const [tempPixQRCode, setTempPixQRCode] = useState(pixQRCode);
   const [tempCardLink, setTempCardLink] = useState(cardLink);
+  const [tempPrice, setTempPrice] = useState(price.toString());
 
-  const paidCount = enrollments.filter(e => e.paymentStatus === PaymentStatus.PAID).length;
-  const totalRevenue = paidCount * 1250; // Simulando R$ 1250 por inscrição
+  const paidCount = payments.filter(p => p.status === 'PAID').length;
+  const totalRevenue = payments
+    .filter(p => p.status === 'PAID')
+    .reduce((sum, p) => sum + p.amount, 0);
+
+  const handleSavePrice = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newPrice = parseFloat(tempPrice);
+    if (!isNaN(newPrice) && onPriceChange) {
+      onPriceChange(newPrice);
+    }
+    setShowPriceModal(false);
+  };
 
   const handleSavePix = (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,44 +103,45 @@ const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ enrollments, is
     }, 2000);
   };
 
-  const TransactionItem: React.FC<{ user: UserProfile }> = ({ user }) => (
-    <div className="flex items-center justify-between p-4 bg-slate-900 border border-slate-800 rounded-xl hover:border-slate-700 transition-all">
-      <div className="flex items-center gap-4">
-        <div className={`p-3 rounded-full ${user.paymentStatus === PaymentStatus.PAID ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
-          {user.paymentStatus === PaymentStatus.PAID ? <ArrowUpRight size={20} /> : <ArrowDownRight size={20} />}
-        </div>
-        <div>
-          <p className="font-bold text-sm">{isUserMode ? 'Inscrição: Operação Vale da Decisão' : user.name}</p>
-          <p className="text-[10px] text-slate-500 font-mono">ID: {user.id.padStart(6, '0')} • {new Date().toLocaleDateString('pt-BR')}</p>
-        </div>
-      </div>
-      <div className="text-right">
-        <p className={`font-bold ${user.paymentStatus === PaymentStatus.PAID ? 'text-emerald-500' : 'text-slate-500'}`}>
-          R$ 1.250,00
-        </p>
-        <p className="text-[10px] uppercase font-black text-slate-600 tracking-widest">{user.paymentStatus === PaymentStatus.PAID ? 'Confirmado' : 'Pendente'}</p>
-      </div>
-    </div>
-  );
-
+  // TransactionItem removido para usar log de transações reais diretamente abaixo
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       {!isUserMode && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-emerald-500/10 border border-emerald-500/20 p-6 rounded-2xl">
-            <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-1">Arrecadação Total</p>
-            <h3 className="text-4xl font-black text-emerald-500">R$ {totalRevenue.toLocaleString()}</h3>
+          <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+               <DollarSign size={80} />
+            </div>
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-[10px] uppercase font-black text-slate-500 tracking-[0.3em] mb-3">Arrecadação Total</p>
+                <h3 className="text-4xl font-black tracking-tighter text-emerald-500">
+                  R$ {totalRevenue.toLocaleString('pt-BR')}
+                </h3>
+              </div>
+              {!isUserMode && onPriceChange && (
+                <button 
+                  onClick={() => setShowPriceModal(true)}
+                  className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-white transition-all flex items-center gap-2"
+                >
+                  <Edit3 size={16} />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">Editar Valor</span>
+                </button>
+              )}
+            </div>
           </div>
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Pagamentos Confirmados</p>
-            <h3 className="text-4xl font-black">{paidCount}</h3>
+          <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl">
+            <p className="text-[10px] uppercase font-black text-slate-500 tracking-[0.3em] mb-3">Pagamentos Confirmados</p>
+            <h3 className="text-4xl font-black tracking-tighter">{paidCount}</h3>
           </div>
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Média por Missão</p>
-            <h3 className="text-4xl font-black">R$ 1.2k</h3>
+            <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl">
+              <p className="text-[10px] uppercase font-black text-slate-500 tracking-[0.3em] mb-3">Valor por Inscrição</p>
+              <h3 className="text-4xl font-black tracking-tighter text-emerald-500">
+                R$ {price.toLocaleString('pt-BR')}
+              </h3>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {isUserMode && (
         <div className="bg-red-900/10 border border-red-900/20 p-8 rounded-[2rem] relative overflow-hidden">
@@ -126,9 +150,12 @@ const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ enrollments, is
           </div>
           <div className="relative z-10 max-w-lg">
             <h3 className="text-2xl font-black uppercase tracking-tighter mb-2">Central de Pagamentos</h3>
-            <p className="text-slate-400 text-sm mb-8 leading-relaxed">
-              Sua inscrição para a próxima operação exige a confirmação da taxa de logística. Escolha o método abaixo para prosseguir.
+            <p className="text-slate-400 text-sm mb-4 leading-relaxed">
+              Sua inscrição exige a confirmação da taxa de logística de <span className="text-white font-bold">R$ {price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>. Escolha o método abaixo para prosseguir.
             </p>
+            <div className="inline-block px-4 py-2 bg-red-950/30 border border-red-900/50 rounded-xl mb-8">
+               <p className="text-[10px] font-black uppercase tracking-widest text-red-400">Pendente de Confirmação</p>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button
@@ -163,16 +190,40 @@ const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ enrollments, is
         </div>
       )}
 
-      <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 border-dashed">
-        <h3 className="font-bold mb-4 flex items-center gap-2">
-          <Landmark size={20} className="text-red-500" />
-          {isUserMode ? 'Histórico de Transações' : 'Log de Transações Recentes'}
-        </h3>
-        <div className="space-y-3">
-          {enrollments.length > 0 ? (
-            enrollments.map(e => <TransactionItem key={e.id} user={e} />)
+      <div className="md:col-span-2 bg-slate-950 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+        <div className="p-8 border-b border-slate-800 flex items-center gap-3">
+           <Landmark className="text-red-500" size={24} />
+           <h3 className="text-lg font-black uppercase tracking-tighter">Log de Transações Recentes</h3>
+        </div>
+        <div className="p-4 space-y-3">
+          {payments.length > 0 ? (
+            payments.slice(0, 10).map((payment) => {
+              const user = enrollments.find(e => e.id === payment.user_id);
+              return (
+                <div key={payment.id} className="flex items-center justify-between p-4 bg-slate-900 border border-slate-800 rounded-xl hover:border-slate-700 transition-all">
+                  <div className="flex items-center gap-4">
+                    <div className={`p-3 rounded-full ${payment.status === 'PAID' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
+                      {payment.status === 'PAID' ? <ArrowUpRight size={20} /> : <ArrowDownRight size={20} />}
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm uppercase">{user?.name || 'Operador Desconhecido'}</p>
+                      <p className="text-[10px] text-slate-500 font-mono">ID: {payment.user_id.substring(0, 8).toUpperCase()} • {new Date(payment.created_at || '').toLocaleDateString('pt-BR')}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className={`font-bold ${payment.status === 'PAID' ? 'text-emerald-500' : 'text-slate-500'}`}>
+                      R$ {payment.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
+                    <p className="text-[10px] uppercase font-black text-slate-600 tracking-widest">{payment.status === 'PAID' ? 'Confirmado' : 'Pendente'}</p>
+                  </div>
+                </div>
+              );
+            })
           ) : (
-            <p className="text-center py-10 text-slate-500">Nenhuma transação registrada no sistema.</p>
+            <div className="py-20 text-center space-y-4 opacity-20">
+              <AlertCircle size={40} className="mx-auto" />
+              <p className="text-[10px] font-black uppercase tracking-[0.3em]">Nenhuma transação detectada</p>
+            </div>
           )}
         </div>
       </div>
@@ -217,7 +268,36 @@ const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ enrollments, is
         </div>
       )}
 
-      {/* Modais omitidos para clareza, mantendo-os inalterados abaixo */}
+      {/* Modal Editar Valor */}
+      {showPriceModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={() => setShowPriceModal(false)}></div>
+          <div className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl">
+            <h3 className="text-xl font-black uppercase tracking-tighter mb-4">Configurar Valor Global</h3>
+            <p className="text-slate-500 text-xs mb-6 font-medium">Este valor será aplicado às novas inscrições do sistema.</p>
+            <form onSubmit={handleSavePrice} className="space-y-4">
+              <div className="relative">
+                <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 font-bold">R$</span>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  value={tempPrice}
+                  onChange={(e) => setTempPrice(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-5 pl-12 text-white font-bold outline-none focus:ring-2 ring-red-500/50"
+                  placeholder="0.00"
+                />
+              </div>
+              <button 
+                type="submit"
+                className="w-full bg-red-700 hover:bg-red-600 text-white p-5 rounded-2xl font-black uppercase tracking-widest transition-all shadow-xl shadow-red-900/20"
+              >
+                Salvar Valor
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {isProcessing && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="flex flex-col items-center gap-4">

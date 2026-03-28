@@ -22,6 +22,15 @@ const App: React.FC = () => {
   const [enrollments, setEnrollments] = useState<UserProfile[]>([]);
   const [missions, setMissions] = useState<MissionDB[]>([]);
   const [payments, setPayments] = useState<PaymentDB[]>([]);
+  const [registrationPrice, setRegistrationPrice] = useState(() => {
+    const saved = localStorage.getItem('uou_registration_price');
+    return saved ? parseFloat(saved) : 1250.00;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('uou_registration_price', registrationPrice.toString());
+  }, [registrationPrice]);
+
   const [view, setView] = useState<AppView>('DASHBOARD');
   const [loading, setLoading] = useState(true);
   const [loadingMessage, setLoadingMessage] = useState('');
@@ -182,7 +191,7 @@ const App: React.FC = () => {
       const isPaid = paymentMethod !== 'PENDENTE';
       const payResult = await createPayment({
         user_id: user.id,
-        amount: 1200.00,
+        amount: registrationPrice,
         method: paymentMethod,
         status: isPaid ? 'PAID' : 'PENDING'
       });
@@ -329,7 +338,7 @@ const App: React.FC = () => {
           </>
         );
       case 'ENROLLMENT':
-        return <EnrollmentForm user={user!} onComplete={handleEnrollmentComplete} />;
+        return <EnrollmentForm user={user!} price={registrationPrice} onComplete={handleEnrollmentComplete} />;
       case 'USERS':
         return (
           <UsersManagement 
@@ -341,13 +350,13 @@ const App: React.FC = () => {
       case 'MISSIONS':
         return <MissionManagement />;
       case 'PAYMENTS':
-        return <PaymentsManagement enrollments={enrollments} />;
+        return <PaymentsManagement enrollments={enrollments} payments={payments} price={registrationPrice} onPriceChange={setRegistrationPrice} />;
       case 'REPORTS':
         return <ReportsView enrollments={enrollments} />;
       case 'MISSION_INFO':
         return <UserDashboard user={user!} onStartEnrollment={() => setView('ENROLLMENT')} onCompleteBriefing={handleBriefingComplete} />;
       case 'PAYMENT_HISTORY':
-        return <PaymentsManagement enrollments={enrollments.filter(e => e.id === user?.id)} isUserMode={true} />;
+        return <PaymentsManagement enrollments={enrollments.filter(e => e.id === user?.id)} payments={payments.filter(p => p.user_id === user?.id)} price={registrationPrice} isUserMode={true} />;
       default:
         return <AdminDashboard enrollments={enrollments} />;
     }
