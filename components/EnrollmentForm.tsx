@@ -72,7 +72,7 @@ Local: ${data.city || '[Cidade]'} - ${data.state || '[Estado]'}`;
 
 interface EnrollmentFormProps {
   user: UserProfile;
-  onComplete: (data: EnrollmentData, paymentMethod: string, videoBlob: Blob) => void;
+  onComplete: (data: EnrollmentData, paymentMethod: string, videoBlob: Blob, consentTerm?: string) => void;
 }
 
 const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => {
@@ -690,7 +690,7 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, onComplete }) => 
             <div className="flex flex-col items-center gap-4">
               <button
                 disabled={hasPaid === null || (hasPaid === true && !paymentMethod)}
-                onClick={() => onComplete(formData, hasPaid ? (paymentMethod || 'PENDENTE') : 'PENDENTE', videoBlob!)}
+                onClick={() => onComplete(formData, hasPaid ? (paymentMethod || 'PENDENTE') : 'PENDENTE', videoBlob!, consentTerm || undefined)}
                 className="w-full md:w-auto px-20 py-6 bg-red-700 hover:bg-red-600 disabled:opacity-20 text-white rounded-2xl font-black uppercase tracking-widest transition-all shadow-2xl flex items-center justify-center gap-4 text-sm group"
               >
                 Finalizar Inscrição

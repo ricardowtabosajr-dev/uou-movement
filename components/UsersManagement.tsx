@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { UserProfile, EnrollmentStatus, PaymentStatus } from '../types';
 import { Search, Filter, CheckCircle, XCircle, Eye, X } from 'lucide-react';
+import EnrollmentDetailPanel from './EnrollmentDetailPanel';
 
 interface UsersManagementProps {
   enrollments: UserProfile[];
@@ -29,61 +30,14 @@ const UsersManagement: React.FC<UsersManagementProps> = ({ enrollments, onApprov
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Modal de Visualização Rápida */}
+      {/* Painel Lateral de Detalhes */}
       {selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in duration-300">
-            <div className="p-6 border-b border-slate-800 flex justify-between items-center">
-              <h3 className="font-bold text-lg uppercase tracking-tight">Dossiê do Participante</h3>
-              <button onClick={() => setSelectedUser(null)} className="p-2 hover:bg-slate-800 rounded-full text-slate-400">
-                <X size={20} />
-              </button>
-            </div>
-            <div className="p-8 space-y-6">
-              <div className="flex items-center gap-6">
-                <img src={selectedUser.avatarUrl} className="w-20 h-20 rounded-2xl border-2 border-red-700/30" alt="" />
-                <div>
-                  <h4 className="text-xl font-black">{selectedUser.name}</h4>
-                  <p className="text-slate-500">{selectedUser.email}</p>
-                  <div className="flex gap-2 mt-2">
-                    <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${getStatusColor(selectedUser.enrollmentStatus)}`}>
-                      {selectedUser.enrollmentStatus}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800">
-                  <p className="text-[10px] font-black text-slate-500 uppercase mb-1">Missão Atribuída</p>
-                  <p className="font-bold">Chamado Intensivo 2024</p>
-                </div>
-                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800">
-                  <p className="text-[10px] font-black text-slate-500 uppercase mb-1">Status Financeiro</p>
-                  <p className={`font-bold ${selectedUser.paymentStatus === PaymentStatus.PAID ? 'text-emerald-500' : 'text-amber-500'}`}>
-                    {selectedUser.paymentStatus}
-                  </p>
-                </div>
-              </div>
-              <div className="bg-red-950/10 p-4 rounded-xl border border-red-900/20">
-                <p className="text-xs text-slate-400 italic">"Participante comprometido com os protocolos de segurança e treinamento tático do UOU MOVEMENT."</p>
-              </div>
-            </div>
-            <div className="p-6 bg-slate-950 border-t border-slate-800 flex gap-3">
-               <button 
-                onClick={() => { onApprove(selectedUser.id); setSelectedUser(null); }}
-                className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-emerald-900/20"
-               >
-                 Aprovar Participante
-               </button>
-               <button 
-                onClick={() => { onReject(selectedUser.id); setSelectedUser(null); }}
-                className="flex-1 bg-red-700 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-red-900/20"
-               >
-                 Rejeitar
-               </button>
-            </div>
-          </div>
-        </div>
+        <EnrollmentDetailPanel
+          user={selectedUser}
+          onClose={() => setSelectedUser(null)}
+          onApprove={onApprove}
+          onReject={onReject}
+        />
       )}
 
       <div className="flex flex-col md:flex-row gap-4 justify-between items-center">

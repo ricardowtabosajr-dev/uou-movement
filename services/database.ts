@@ -5,13 +5,14 @@ import { EnrollmentData } from '../types';
 
 /**
  * Salva os dados de inscrição de um usuário.
+ * Aceita opcionalmente o termo de consentimento gerado.
  */
 export const saveEnrollment = async (
   userId: string,
-  enrollmentData: EnrollmentData
+  enrollmentData: EnrollmentData,
+  consentTerm?: string
 ): Promise<{ success: boolean; error: string | null }> => {
-  // Converter camelCase para snake_case
-  const dbData = {
+  const dbData: Record<string, any> = {
     user_id: userId,
     full_name: enrollmentData.fullName,
     nickname: enrollmentData.nickname,
@@ -60,6 +61,10 @@ export const saveEnrollment = async (
     agreed_to_terms: enrollmentData.agreedToTerms,
   };
 
+  if (consentTerm) {
+    dbData.consent_term = consentTerm;
+  }
+
   const { error } = await supabase
     .from('enrollments')
     .upsert(dbData, { onConflict: 'user_id' });
@@ -84,6 +89,25 @@ export const getEnrollment = async (userId: string) => {
 
   if (error || !data) return null;
   return data;
+};
+
+/**
+ * Busca a URL assinada do vídeo de identidade de um usuário.
+ * Retorna null se o vídeo não existir.
+ */
+export const getIdentityVideoUrl = async (userId: string): Promise<string | null> => {
+  const fileName = `${userId}/identity_v1.mp4`;
+
+  const { data, error } = await supabase.storage
+    .from('identities')
+    .createSignedUrl(fileName, 3600); // URL válida por 1 hora
+
+  if (error || !data?.signedUrl) {
+    console.warn('Vídeo não encontrado:', error?.message);
+    return null;
+  }
+
+  return data.signedUrl;
 };
 
 // ===== MISSIONS =====
