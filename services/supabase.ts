@@ -14,7 +14,8 @@ export const supabase = createClient(
   supabaseAnonKey || '',
   {
     auth: {
-      persistSession: false
+      persistSession: true,
+      storage: sessionStorage
     }
   }
 );
