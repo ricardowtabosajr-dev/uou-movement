@@ -216,7 +216,7 @@ const App: React.FC = () => {
       setLoadingMessage('FINALIZANDO REGISTRO TÁTICO...');
       console.log('Passo 4: Atualizando perfil...');
       const updates = {
-        enrollmentStatus: EnrollmentStatus.REVIEWING,
+        enrollmentStatus: EnrollmentStatus.APPROVED,
         paymentStatus: isPaid ? PaymentStatus.PAID : PaymentStatus.PENDING,
       };
       

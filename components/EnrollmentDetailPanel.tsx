@@ -500,13 +500,7 @@ const EnrollmentDetailPanel: React.FC<EnrollmentDetailPanelProps> = ({ user, onC
 
         {/* Footer Actions */}
         <div className="flex-shrink-0 p-5 bg-slate-950 border-t border-slate-800 flex gap-3 no-print">
-          <button
-            onClick={() => { onApprove(user.id); onClose(); }}
-            disabled={user.enrollmentStatus === EnrollmentStatus.APPROVED}
-            className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-30 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-emerald-900/20 text-sm"
-          >
-            <CheckCircle size={18} /> Aprovar
-          </button>
+
           <button
             onClick={() => { onDelete(user.id); onClose(); }}
             className="flex-1 flex items-center justify-center gap-2 bg-red-700 hover:bg-red-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-red-900/20 text-sm"

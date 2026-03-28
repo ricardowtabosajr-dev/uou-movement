@@ -141,14 +141,6 @@ const UsersManagement: React.FC<UsersManagementProps> = ({ enrollments, onApprov
                       <Eye size={18} />
                     </button>
                     <button 
-                      onClick={() => onApprove(user.id)}
-                      className="p-2.5 bg-slate-800/50 hover:bg-emerald-900/40 rounded-xl text-emerald-500 transition-all hover:scale-110 disabled:opacity-30" 
-                      title="Aprovar"
-                      disabled={user.enrollmentStatus === EnrollmentStatus.APPROVED}
-                    >
-                      <CheckCircle size={18} />
-                    </button>
-                    <button 
                       onClick={() => onDelete(user.id)}
                       className="p-2.5 bg-slate-800/50 hover:bg-red-900/60 rounded-xl text-red-500 transition-all hover:scale-110" 
                       title="Excluir Usuário"
