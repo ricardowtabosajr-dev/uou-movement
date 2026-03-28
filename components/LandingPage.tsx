@@ -55,11 +55,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterAdmin, onEnterUser }) 
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-900">
         <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <div className="p-1.5 bg-red-700 rounded-lg">
-              <ShieldAlert size={24} className="text-white" />
-            </div>
-            <span className="text-xl font-black tracking-tighter uppercase">UOU <span className="text-red-600">MOVEMENT</span></span>
+          <div className="flex items-center gap-4 cursor-pointer group" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <img 
+              src="/logo.png" 
+              alt="UOU Movement Logo" 
+              className="h-14 w-auto drop-shadow-lg group-hover:scale-105 transition-transform"
+            />
           </div>
 
           <div className="hidden md:flex items-center gap-8">
@@ -111,13 +112,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterAdmin, onEnterUser }) 
           </div>
 
           <div className="space-y-4">
-          <div className="flex flex-col items-center gap-6">
-            <img 
-               src="/logo.png" 
-               alt="UOU Movement logo" 
-               className="h-44 md:h-64 w-auto object-contain drop-shadow-[0_0_50px_rgba(185,28,28,0.3)] animate-in fade-in zoom-in duration-1000"
-            />
-          </div>
+             <p className="text-red-700 font-black tracking-[0.6em] uppercase text-xs md:text-sm animate-pulse">UOU MOVEMENT</p>
              <h1 className="text-6xl md:text-[7rem] font-black tracking-tighter leading-[0.9] uppercase">
                As Ondas do <br /> 
                <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-amber-600 to-red-600">Avivamento</span>
