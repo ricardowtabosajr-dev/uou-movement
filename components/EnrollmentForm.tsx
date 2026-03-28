@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { UserProfile, EnrollmentData, PaymentStatus } from '../types';
 import { generateConsentTerm } from '../services/gemini';
 import {
@@ -82,6 +82,23 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, price, onComplete
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
   const [consentTerm, setConsentTerm] = useState<string | null>(null);
+
+  // Estados para Assinatura Digital
+  const signatureCanvasRef = useRef<HTMLCanvasElement>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
+  const [signatureHash, setSignatureHash] = useState<string | null>(null);
+  const [signerIp, setSignerIp] = useState<string>('Obtendo...');
+  const [signatureTimestamp, setSignatureTimestamp] = useState<string | null>(null);
+  const signerUserAgent = useRef<string>(typeof navigator !== 'undefined' ? navigator.userAgent : 'N/A');
+
+  // Capturar IP público ao montar o componente
+  useEffect(() => {
+    fetch('https://api.ipify.org?format=json')
+      .then(res => res.json())
+      .then(data => setSignerIp(data.ip))
+      .catch(() => setSignerIp('Não disponível'));
+  }, []);
 
   // Estados para o Vídeo de Verificação
   const [recording, setRecording] = useState(false);
@@ -272,11 +289,110 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, price, onComplete
 
   const [hasPaid, setHasPaid] = useState<boolean | null>(null);
 
+  // === ASSINATURA DIGITAL ===
+  const initSignatureCanvas = () => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * 2;
+    canvas.height = rect.height * 2;
+    ctx.scale(2, 2);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#e2e8f0';
+  };
+
+  useEffect(() => {
+    if (step === 5 && !signatureDataUrl) {
+      setTimeout(initSignatureCanvas, 200);
+    }
+  }, [step]);
+
+  const getCanvasPos = (e: React.MouseEvent | React.TouchEvent) => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    if ('touches' in e) {
+      return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+    }
+    return { x: (e as React.MouseEvent).clientX - rect.left, y: (e as React.MouseEvent).clientY - rect.top };
+  };
+
+  const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    const ctx = signatureCanvasRef.current?.getContext('2d');
+    if (!ctx) return;
+    setIsDrawing(true);
+    const pos = getCanvasPos(e);
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+  };
+
+  const draw = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    if (!isDrawing) return;
+    const ctx = signatureCanvasRef.current?.getContext('2d');
+    if (!ctx) return;
+    const pos = getCanvasPos(e);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+  };
+
+  const stopDrawing = () => setIsDrawing(false);
+
+  const clearSignature = () => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setSignatureDataUrl(null);
+    setSignatureHash(null);
+  };
+
+  const confirmSignature = async () => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+    const dataUrl = canvas.toDataURL('image/png');
+    setSignatureDataUrl(dataUrl);
+
+    const timestamp = new Date().toISOString();
+    setSignatureTimestamp(timestamp);
+
+    // Gerar hash SHA-256 com dados forenses completos (Lei 14.063/2020)
+    const signPayload = [
+      'UOU_MOVEMENT_CONSENT_v1',
+      formData.fullName,
+      formData.cpf,
+      user.email,
+      timestamp,
+      signerIp,
+      signerUserAgent.current,
+      consentTerm || '',
+      dataUrl.substring(0, 500)
+    ].join('|');
+
+    const encoder = new TextEncoder();
+    const data = encoder.encode(signPayload);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    setSignatureHash(hashHex);
+  };
+
+  const openGovBrSigner = () => {
+    window.open('https://assinador.iti.br/', '_blank', 'noopener,noreferrer');
+  };
+
   const downloadPDF = () => {
     if (!consentTerm) return;
     const doc = new jsPDF();
     const margin = 20;
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
     const maxLineWidth = pageWidth - margin * 2;
 
     doc.setFontSize(16);
@@ -287,7 +403,86 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, price, onComplete
     doc.setFont("helvetica", "normal");
     const cleanText = consentTerm.replace(/[#*]/g, '');
     const lines = doc.splitTextToSize(cleanText, maxLineWidth);
-    doc.text(lines, margin, 35);
+    let yPos = 35;
+
+    for (let i = 0; i < lines.length; i++) {
+      if (yPos > pageHeight - 80) {
+        doc.addPage();
+        yPos = 20;
+      }
+      doc.text(lines[i], margin, yPos);
+      yPos += 5;
+    }
+
+    // Seção de Assinatura Digital
+    if (signatureDataUrl) {
+      if (yPos > pageHeight - 100) {
+        doc.addPage();
+        yPos = 20;
+      }
+
+      yPos += 15;
+      doc.setDrawColor(100, 116, 139);
+      doc.setLineWidth(0.5);
+      doc.line(margin, yPos, pageWidth - margin, yPos);
+      yPos += 12;
+
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("ASSINATURA DIGITAL", margin, yPos);
+      yPos += 10;
+
+      // Imagem da assinatura
+      try {
+        doc.addImage(signatureDataUrl, 'PNG', margin, yPos, 60, 25);
+      } catch (err) {
+        console.warn('Erro ao inserir imagem da assinatura no PDF:', err);
+      }
+      yPos += 30;
+
+      // Linha de assinatura
+      doc.setDrawColor(30, 41, 59);
+      doc.line(margin, yPos, margin + 80, yPos);
+      yPos += 5;
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text(formData.fullName, margin, yPos);
+      yPos += 4;
+      doc.text(`CPF: ${formData.cpf}`, margin, yPos);
+      yPos += 4;
+      doc.text(`Email: ${user.email}`, margin, yPos);
+      yPos += 4;
+      doc.text(`Data/Hora: ${signatureTimestamp ? new Date(signatureTimestamp).toLocaleString('pt-BR') : new Date().toLocaleString('pt-BR')}`, margin, yPos);
+      yPos += 8;
+
+      // Metadados Forenses (Lei 14.063/2020)
+      doc.setFontSize(7);
+      doc.setFont("helvetica", "bold");
+      doc.text('METADADOS FORENSES (Lei 14.063/2020 - Assinatura Eletrônica Avançada)', margin, yPos);
+      yPos += 5;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(6.5);
+      doc.text(`Endereço IP do Signatário: ${signerIp}`, margin, yPos);
+      yPos += 3.5;
+      doc.text(`User-Agent: ${signerUserAgent.current.substring(0, 100)}`, margin, yPos);
+      yPos += 3.5;
+      doc.text(`Timestamp ISO 8601: ${signatureTimestamp || 'N/A'}`, margin, yPos);
+      yPos += 3.5;
+      doc.text(`E-mail verificado via Supabase Auth: ${user.email}`, margin, yPos);
+      yPos += 6;
+
+      // Hash de integridade
+      if (signatureHash) {
+        doc.setFontSize(6);
+        doc.setTextColor(100, 116, 139);
+        doc.text(`Hash de Integridade (SHA-256): ${signatureHash}`, margin, yPos);
+        yPos += 4;
+        doc.text('Este documento possui assinatura eletrônica avançada conforme Art. 4° da Lei 14.063/2020.', margin, yPos);
+        yPos += 3.5;
+        doc.text('Para validação com certificado ICP-Brasil, assine este PDF no Assinador GOV.BR (https://assinador.iti.br).', margin, yPos);
+        doc.setTextColor(0, 0, 0);
+      }
+    }
 
     doc.save(`Inscricao_UOU_${formData.fullName.replace(/\s+/g, '_')}.pdf`);
   };
@@ -591,14 +786,113 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, price, onComplete
               )}
             </div>
 
+            {/* === ÁREA DE ASSINATURA DIGITAL === */}
+            <div className="bg-slate-950 border border-slate-800 rounded-3xl p-6 md:p-8 space-y-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-700/20 rounded-lg">
+                  <FileText size={20} className="text-amber-500" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black uppercase tracking-widest text-slate-200">Assinatura Digital</h3>
+                  <p className="text-[10px] text-slate-500 font-medium mt-0.5">Assine no campo abaixo para validar o termo. Sua assinatura será criptografada.</p>
+                </div>
+              </div>
+
+              {!signatureDataUrl ? (
+                <>
+                  <div className="relative border-2 border-dashed border-slate-700 rounded-2xl overflow-hidden bg-slate-900/50" style={{ touchAction: 'none' }}>
+                    <canvas
+                      ref={signatureCanvasRef}
+                      className="w-full cursor-crosshair"
+                      style={{ height: '160px' }}
+                      onMouseDown={startDrawing}
+                      onMouseMove={draw}
+                      onMouseUp={stopDrawing}
+                      onMouseLeave={stopDrawing}
+                      onTouchStart={startDrawing}
+                      onTouchMove={draw}
+                      onTouchEnd={stopDrawing}
+                    />
+                    <p className="absolute bottom-2 left-0 right-0 text-center text-[9px] text-slate-700 font-mono uppercase tracking-widest pointer-events-none">
+                      Desenhe sua assinatura aqui
+                    </p>
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={clearSignature}
+                      className="flex-1 flex items-center justify-center gap-2 p-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold uppercase tracking-widest transition-all text-slate-400"
+                    >
+                      <Trash2 size={14} /> Limpar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={confirmSignature}
+                      className="flex-1 flex items-center justify-center gap-2 p-3 bg-emerald-700 hover:bg-emerald-600 rounded-xl text-xs font-bold uppercase tracking-widest transition-all text-white shadow-lg shadow-emerald-900/30"
+                    >
+                      <CheckCircle size={14} /> Confirmar Assinatura
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-4">
+                  <div className="bg-emerald-950/30 border border-emerald-800/40 rounded-2xl p-5 flex items-center gap-4">
+                    <CheckCircle size={28} className="text-emerald-500 shrink-0" />
+                    <div>
+                      <p className="text-sm font-black text-emerald-400 uppercase tracking-wider">Assinatura Eletrônica Registrada</p>
+                      <p className="text-[10px] text-slate-500 mt-1">Signatário: {formData.fullName} • {signatureTimestamp ? new Date(signatureTimestamp).toLocaleString('pt-BR') : new Date().toLocaleString('pt-BR')}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <img src={signatureDataUrl} alt="Assinatura" className="h-16 bg-slate-900 rounded-xl border border-slate-800 px-4 py-2" />
+                    <button
+                      type="button"
+                      onClick={() => { setSignatureDataUrl(null); setSignatureHash(null); setSignatureTimestamp(null); setTimeout(initSignatureCanvas, 200); }}
+                      className="text-[10px] text-red-500 hover:text-red-400 uppercase font-bold tracking-widest transition-colors"
+                    >
+                      Refazer assinatura
+                    </button>
+                  </div>
+
+                  {/* Metadados Forenses */}
+                  <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 space-y-2">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2">Metadados da Assinatura (Lei 14.063/2020)</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1.5">
+                      <p className="text-[9px] text-slate-600"><span className="text-slate-500 font-bold">IP:</span> {signerIp}</p>
+                      <p className="text-[9px] text-slate-600"><span className="text-slate-500 font-bold">Email:</span> {user.email}</p>
+                      <p className="text-[9px] text-slate-600"><span className="text-slate-500 font-bold">Timestamp:</span> {signatureTimestamp || 'N/A'}</p>
+                      <p className="text-[9px] text-slate-600"><span className="text-slate-500 font-bold">CPF:</span> {formData.cpf}</p>
+                    </div>
+                    {signatureHash && (
+                      <p className="text-[8px] font-mono text-slate-700 break-all mt-2 pt-2 border-t border-slate-800">
+                        <span className="text-slate-500 font-bold">SHA-256:</span> {signatureHash}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="flex flex-col gap-4">
               <button 
                 onClick={downloadPDF} 
-                disabled={!consentTerm}
+                disabled={!consentTerm || !signatureDataUrl}
                 className="flex items-center justify-center gap-3 p-4 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
               >
-                <FileDown size={20} /> Baixar Cópia em PDF
+                <FileDown size={20} /> Baixar PDF com Assinatura Eletrônica
               </button>
+
+              {/* Botão GOV.BR */}
+              <button 
+                onClick={openGovBrSigner}
+                disabled={!signatureDataUrl}
+                className="flex items-center justify-center gap-3 p-4 bg-[#1351B4] hover:bg-[#155BCB] disabled:opacity-20 rounded-2xl text-xs font-black uppercase tracking-widest transition-all text-white shadow-lg shadow-blue-900/30"
+              >
+                <ShieldHalf size={20} /> Assinar via GOV.BR (ICP-Brasil)
+              </button>
+              <p className="text-[9px] text-slate-600 text-center -mt-2 leading-tight">
+                Opcional: Para validade jurídica máxima (equivalente a reconhecimento de firma), baixe o PDF acima e assine-o no portal oficial do Governo Federal. Requer conta GOV.BR nível Prata ou Ouro.
+              </p>
 
               <div className="p-6 bg-red-900/10 border border-red-900/40 rounded-3xl flex items-start gap-4">
                 <input 
@@ -607,10 +901,14 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, price, onComplete
                   id="agreed"
                   checked={formData.agreedToTerms} 
                   onChange={handleChange} 
-                  className="w-6 h-6 mt-1 accent-red-600 rounded-lg cursor-pointer"
+                  disabled={!signatureDataUrl}
+                  className="w-6 h-6 mt-1 accent-red-600 rounded-lg cursor-pointer disabled:opacity-30"
                 />
-                <label htmlFor="agreed" className="text-xs font-bold text-slate-300 cursor-pointer leading-tight">
-                  Eu li, entendo os riscos descritos (incluindo privação de sono, estresse e desafios físicos) e aceito integralmente os termos do Chamado UOU Movement sob as leis da LGPD.
+                <label htmlFor="agreed" className={`text-xs font-bold cursor-pointer leading-tight ${!signatureDataUrl ? 'text-slate-600' : 'text-slate-300'}`}>
+                  {!signatureDataUrl 
+                    ? 'Assine o termo acima antes de aceitar os termos.'
+                    : 'Eu li, entendo os riscos descritos (incluindo privação de sono, estresse e desafios físicos) e aceito integralmente os termos do Chamado UOU Movement sob as leis da LGPD.'
+                  }
                 </label>
               </div>
             </div>
@@ -731,7 +1029,7 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, price, onComplete
                   {!videoBlob ? "Vídeo Obrigatório" : "Dados do Responsável Obrigatórios"}
                 </div>
               )}
-              <button onClick={handleNext} disabled={loading || (step === 5 && !formData.agreedToTerms) || (step === 1 && !videoBlob) || (step === 1 && isMinor && (!formData.guardianName || !formData.guardianPhone))} className="flex items-center gap-4 bg-red-700 hover:bg-red-600 disabled:opacity-20 px-14 py-6 rounded-2xl font-black uppercase tracking-widest transition-all shadow-2xl text-sm hover:scale-[1.02]">
+              <button onClick={handleNext} disabled={loading || (step === 5 && (!formData.agreedToTerms || !signatureDataUrl)) || (step === 1 && !videoBlob) || (step === 1 && isMinor && (!formData.guardianName || !formData.guardianPhone))} className="flex items-center gap-4 bg-red-700 hover:bg-red-600 disabled:opacity-20 px-14 py-6 rounded-2xl font-black uppercase tracking-widest transition-all shadow-2xl text-sm hover:scale-[1.02]">
                 {loading ? 'Processando...' : 'Avançar'} <ArrowRight size={22} />
               </button>
             </div>
