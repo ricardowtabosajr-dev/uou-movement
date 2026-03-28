@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { UserRole, UserProfile, EnrollmentStatus, PaymentStatus, EnrollmentData } from './types';
 import { supabase } from './services/supabase';
 import { getProfile, updateProfile, getAllProfiles, signOut, onAuthStateChange } from './services/auth';
@@ -19,6 +19,12 @@ type AppView = 'DASHBOARD' | 'ENROLLMENT' | 'USERS' | 'MISSIONS' | 'PAYMENTS' | 
 
 const App: React.FC = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
+  const userRef = useRef<UserProfile | null>(null);
+
+  // Sincronizar ref com state
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
   const [enrollments, setEnrollments] = useState<UserProfile[]>([]);
   const [missions, setMissions] = useState<MissionDB[]>([]);
   const [payments, setPayments] = useState<PaymentDB[]>([]);
@@ -96,7 +102,13 @@ const App: React.FC = () => {
           console.log('SIGNED_IN ignorado: init ainda em andamento.');
           return;
         }
-        // Só recarrega perfil se for um login NOVO (não o da init)
+
+        // Se o usuário já está logado com o mesmo ID, ignora para evitar recarregar a tela
+        if (userRef.current && userRef.current.id === session.user.id) {
+          console.log('SIGNED_IN ignorado: usuário já carregado em memória.');
+          return;
+        }
+
         setLoading(true);
         console.log('Login novo detectado. Carregando perfil...');
         const profile = await getProfile(session.user.id);
