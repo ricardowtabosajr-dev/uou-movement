@@ -92,13 +92,13 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeView, onViewChange, onLog
 
       <aside className={`fixed md:relative z-40 h-full w-64 bg-slate-900/50 backdrop-blur-xl border-r border-slate-800 transition-transform duration-300 transform ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} ${className}`}>
         <div className="flex flex-col h-full p-6">
-          <div className="flex items-center gap-3 mb-10 px-2 lg:px-4">
+          <div className="flex items-center justify-center mb-10 px-2 lg:px-4">
             <div className="relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-amber-600 rounded-full blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+              <div className="absolute -inset-2 bg-gradient-to-r from-red-600 to-amber-600 rounded-full blur-xl opacity-20 group-hover:opacity-40 transition duration-1000"></div>
               <img 
                 src="/logo.png" 
                 alt="UOU Movement Logo" 
-                className="relative h-14 w-auto object-contain drop-shadow-2xl"
+                className="relative h-20 w-auto object-contain drop-shadow-2xl transition-transform group-hover:scale-105"
               />
             </div>
           </div>

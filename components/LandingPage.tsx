@@ -54,12 +54,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterAdmin, onEnterUser }) 
     <div className="bg-slate-950 min-h-screen text-slate-100 selection:bg-red-700/30">
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-900">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-          <div className="flex items-center gap-4 cursor-pointer group" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+        <div className="max-w-7xl mx-auto px-6 h-24 flex justify-between items-center">
+          <div className="flex items-center gap-4 cursor-pointer group py-2" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <img 
               src="/logo.png" 
               alt="UOU Movement Logo" 
-              className="h-14 w-auto drop-shadow-lg group-hover:scale-105 transition-transform"
+              className="h-20 w-auto drop-shadow-xl group-hover:scale-105 transition-transform"
             />
           </div>
 

@@ -91,12 +91,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess, i
 
         <div className="p-8 md:p-12">
           <div className="flex flex-col items-center mb-8">
-            <div className="relative group mb-6">
-              <div className="absolute -inset-2 bg-red-600/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition duration-500"></div>
+            <div className="relative group mb-8">
+              <div className="absolute -inset-4 bg-red-600/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition duration-700"></div>
               <img 
                 src="/logo.png" 
                 alt="UOU Movement logo" 
-                className="relative h-20 w-auto object-contain drop-shadow-2xl"
+                className="relative h-28 w-auto object-contain drop-shadow-[0_0_30px_rgba(185,28,28,0.2)]"
               />
             </div>
             <h2 className="text-2xl font-black uppercase tracking-tighter">
