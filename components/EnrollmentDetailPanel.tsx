@@ -6,7 +6,7 @@ import {
   X, User, MapPin, Church, Activity, ShieldCheck,
   Phone, Mail, Instagram, Download, FileText,
   Video, Loader2, AlertCircle, CheckCircle, XCircle,
-  Heart, Shirt, Globe, Droplet
+  Heart, Shirt, Globe, Droplet, Printer
 } from 'lucide-react';
 
 interface EnrollmentDetailPanelProps {
@@ -23,12 +23,12 @@ interface SectionProps {
 }
 
 const Section: React.FC<SectionProps> = ({ title, icon, children }) => (
-  <div className="border border-slate-800 rounded-2xl overflow-hidden">
-    <div className="flex items-center gap-2 px-5 py-3 bg-slate-800/40 border-b border-slate-800">
-      {icon}
-      <h4 className="text-xs font-black uppercase tracking-widest text-slate-300">{title}</h4>
+  <div className="border border-slate-800 rounded-2xl overflow-hidden print:border-slate-300 print:rounded-none break-inside-avoid mb-4">
+    <div className="flex items-center gap-2 px-5 py-3 bg-slate-800/40 border-b border-slate-800 print:bg-slate-100 print:border-slate-300">
+      <span className="print:hidden">{icon}</span>
+      <h4 className="text-xs font-black uppercase tracking-widest text-slate-300 print:text-slate-900">{title}</h4>
     </div>
-    <div className="p-5 space-y-3">{children}</div>
+    <div className="p-5 space-y-3 print:p-4">{children}</div>
   </div>
 );
 
@@ -45,9 +45,9 @@ const Field: React.FC<{ label: string; value?: string | boolean | string[] | nul
   }
 
   return (
-    <div>
-      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-0.5">{label}</p>
-      <p className="text-sm text-slate-200 font-medium">{displayValue}</p>
+    <div className="break-inside-avoid">
+      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-0.5 print:text-slate-600">{label}</p>
+      <p className="text-sm text-slate-200 font-medium print:text-slate-900">{displayValue}</p>
     </div>
   );
 };
@@ -77,6 +77,10 @@ const EnrollmentDetailPanel: React.FC<EnrollmentDetailPanelProps> = ({ user, onC
     loadData();
   }, [user.id]);
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   const getStatusBadge = (status?: EnrollmentStatus) => {
     const map: Record<string, { bg: string; text: string }> = {
       APPROVED: { bg: 'bg-emerald-500/10 border-emerald-500/30', text: 'text-emerald-400' },
@@ -95,25 +99,61 @@ const EnrollmentDetailPanel: React.FC<EnrollmentDetailPanelProps> = ({ user, onC
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/70 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/70 backdrop-blur-sm print:bg-white print:static print:inset-auto" onClick={onClose}>
+      <style>{`
+        @media print {
+          @page { margin: 1cm; }
+          body { background: white !important; }
+          .no-print { display: none !important; }
+          .print-content { 
+            position: absolute !important; 
+            left: 0 !important; 
+            top: 0 !important; 
+            width: 100% !important; 
+            height: auto !important;
+            overflow: visible !important;
+            background: white !important;
+            color: black !important;
+            box-shadow: none !important;
+            border: none !important;
+          }
+          .fixed { position: static !important; }
+          .overflow-y-auto { overflow: visible !important; }
+        }
+      `}</style>
       <div
-        className="w-full max-w-2xl h-full bg-slate-900 border-l border-slate-800 shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-right duration-300"
+        className="w-full max-w-2xl h-full bg-slate-900 border-l border-slate-800 shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-right duration-300 print-content"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex-shrink-0 p-6 border-b border-slate-800 bg-slate-900">
-          <div className="flex justify-between items-start mb-5">
+        <div className="flex-shrink-0 p-6 border-b border-slate-800 bg-slate-900 print:bg-white print:border-slate-300">
+          <div className="flex justify-between items-start mb-5 no-print">
             <h3 className="text-lg font-black uppercase tracking-tight">Dossiê do Participante</h3>
-            <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-xl text-slate-400 transition-colors">
-              <X size={20} />
-            </button>
+            <div className="flex gap-2">
+              <button 
+                onClick={handlePrint}
+                className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-all border border-slate-700 flex items-center gap-2"
+              >
+                <Printer size={18} />
+                <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Imprimir</span>
+              </button>
+              <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-xl text-slate-400 transition-colors">
+                <X size={20} />
+              </button>
+            </div>
           </div>
+          
+          <div className="hidden print:block mb-8 text-center border-b-2 border-slate-900 pb-6">
+            <h1 className="text-3xl font-black uppercase tracking-tighter text-slate-900">UOU MOVEMENT</h1>
+            <h2 className="text-sm font-bold uppercase tracking-widest text-slate-600 mt-1">Dossiê Oficial de Recrutamento</h2>
+          </div>
+
           <div className="flex items-center gap-4">
-            <img src={user.avatarUrl} className="w-16 h-16 rounded-2xl border-2 border-red-700/30 shadow-lg" alt="" />
+            <img src={user.avatarUrl} className="w-16 h-16 rounded-2xl border-2 border-red-700/30 shadow-lg print:border-slate-300 print:shadow-none" alt="" />
             <div>
-              <h4 className="text-xl font-black">{user.name}</h4>
-              <p className="text-slate-500 text-sm">{user.email}</p>
-              <div className="flex gap-2 mt-2">
+              <h4 className="text-xl font-black print:text-slate-900">{user.name}</h4>
+              <p className="text-slate-500 text-sm print:text-slate-600">{user.email}</p>
+              <div className="flex gap-2 mt-2 no-print">
                 <span className={`text-[10px] font-black px-2.5 py-1 rounded-full uppercase ${getStatusBadge(user.enrollmentStatus)}`}>
                   {user.enrollmentStatus}
                 </span>
@@ -129,7 +169,7 @@ const EnrollmentDetailPanel: React.FC<EnrollmentDetailPanelProps> = ({ user, onC
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 mt-5 bg-slate-950 rounded-xl p-1">
+          <div className="flex gap-1 mt-5 bg-slate-950 rounded-xl p-1 no-print">
             {tabs.map(tab => (
               <button
                 key={tab.id}
@@ -243,8 +283,8 @@ const EnrollmentDetailPanel: React.FC<EnrollmentDetailPanelProps> = ({ user, onC
                 <div className="space-y-4 animate-in fade-in duration-300">
                   {enrollment?.consent_term ? (
                     <>
-                      <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 max-h-[60vh] overflow-y-auto">
-                        <div className="font-mono text-[13px] leading-relaxed text-slate-400 whitespace-pre-wrap">
+                      <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 max-h-[60vh] overflow-y-auto print:bg-white print:border-none print:max-h-none print:p-0">
+                        <div className="font-mono text-[13px] leading-relaxed text-slate-400 whitespace-pre-wrap print:text-black print:text-sm">
                           {enrollment.consent_term}
                         </div>
                       </div>
@@ -266,7 +306,7 @@ const EnrollmentDetailPanel: React.FC<EnrollmentDetailPanelProps> = ({ user, onC
 
               {/* TAB: VÍDEO */}
               {activeTab === 'video' && (
-                <div className="space-y-4 animate-in fade-in duration-300">
+                <div className="space-y-4 animate-in fade-in duration-300 no-print">
                   {videoUrl ? (
                     <div className="space-y-4">
                       <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 text-center">
@@ -303,7 +343,7 @@ const EnrollmentDetailPanel: React.FC<EnrollmentDetailPanelProps> = ({ user, onC
         </div>
 
         {/* Footer Actions */}
-        <div className="flex-shrink-0 p-5 bg-slate-950 border-t border-slate-800 flex gap-3">
+        <div className="flex-shrink-0 p-5 bg-slate-950 border-t border-slate-800 flex gap-3 no-print">
           <button
             onClick={() => { onApprove(user.id); onClose(); }}
             disabled={user.enrollmentStatus === EnrollmentStatus.APPROVED}
