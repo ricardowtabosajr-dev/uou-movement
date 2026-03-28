@@ -28,6 +28,30 @@ const UsersManagement: React.FC<UsersManagementProps> = ({ enrollments, onApprov
     }
   };
 
+  const handleExportCSV = () => {
+    if (enrollments.length === 0) return;
+
+    const headers = ['Nome', 'Email', 'Missao', 'Status Inscricao', 'Financeiro'];
+    const rows = enrollments.map(u => [
+      `"${u.name}"`,
+      `"${u.email}"`,
+      '"Chamado Intensivo 2024"',
+      `"${u.enrollmentStatus}"`,
+      `"${u.paymentStatus}"`
+    ].join(','));
+
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `participantes_uou_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Painel Lateral de Detalhes */}
@@ -56,7 +80,10 @@ const UsersManagement: React.FC<UsersManagementProps> = ({ enrollments, onApprov
           <button className="flex items-center gap-2 px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors">
             <Filter size={18} /> Filtrar Status
           </button>
-          <button className="flex items-center gap-2 px-4 py-3 bg-red-700 rounded-xl text-sm font-bold hover:bg-red-600 transition-colors shadow-lg shadow-red-900/20">
+          <button 
+            onClick={handleExportCSV}
+            className="flex items-center gap-2 px-4 py-3 bg-red-700 rounded-xl text-sm font-bold hover:bg-red-600 transition-colors shadow-lg shadow-red-900/20"
+          >
             Exportar Lista (CSV)
           </button>
         </div>
