@@ -10,7 +10,9 @@ import { EnrollmentData } from '../types';
 export const saveEnrollment = async (
   userId: string,
   enrollmentData: EnrollmentData,
-  consentTerm?: string
+  consentTerm?: string,
+  signatureData?: string,
+  signatureHash?: string
 ): Promise<{ success: boolean; error: string | null }> => {
   const dbData: Record<string, any> = {
     user_id: userId,
@@ -25,6 +27,7 @@ export const saveEnrollment = async (
     shirt_size: enrollmentData.shirtSize,
     guardian_name: enrollmentData.guardianName || null,
     guardian_phone: enrollmentData.guardianPhone || null,
+    guardian_cpf: enrollmentData.guardianCpf || null,
     phone: enrollmentData.phone,
     instagram: enrollmentData.instagram,
     address: enrollmentData.address,
@@ -63,6 +66,12 @@ export const saveEnrollment = async (
 
   if (consentTerm) {
     dbData.consent_term = consentTerm;
+  }
+  if (signatureData) {
+    dbData.signature_data = signatureData;
+  }
+  if (signatureHash) {
+    dbData.signature_hash = signatureHash;
   }
 
   const { error } = await supabase

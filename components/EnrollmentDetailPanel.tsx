@@ -374,6 +374,7 @@ const EnrollmentDetailPanel: React.FC<EnrollmentDetailPanelProps> = ({ user, onC
                     {enrollment.guardian_name && (
                       <div className="mt-3 pt-3 border-t border-slate-800 grid grid-cols-2 gap-3">
                         <Field label="Responsável" value={enrollment.guardian_name} />
+                        <Field label="CPF do Responsável" value={enrollment.guardian_cpf} />
                         <Field label="Telefone Responsável" value={enrollment.guardian_phone} />
                       </div>
                     )}
@@ -439,11 +440,98 @@ const EnrollmentDetailPanel: React.FC<EnrollmentDetailPanelProps> = ({ user, onC
                 <div className="space-y-4 animate-in fade-in duration-300">
                   {enrollment?.consent_term ? (
                     <>
-                      <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 max-h-[60vh] overflow-y-auto print:bg-white print:border-none print:max-h-none print:p-0">
+                      <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 max-h-[50vh] overflow-y-auto print:bg-white print:border-none print:max-h-none print:p-0">
                         <div className="font-mono text-[13px] leading-relaxed text-slate-400 whitespace-pre-wrap print:text-black print:text-sm">
                           {enrollment.consent_term}
                         </div>
                       </div>
+
+                      {/* Assinatura Digital */}
+                      {enrollment.signature_data ? (
+                        <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 space-y-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-emerald-700/20 rounded-lg">
+                              <CheckCircle size={18} className="text-emerald-500" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-black uppercase tracking-widest text-emerald-400">Assinatura Digital Registrada</p>
+                              <p className="text-[10px] text-slate-500">Assinatura realizada no ato da inscrição</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <img src={enrollment.signature_data} alt="Assinatura" className="h-20 bg-slate-900 rounded-xl border border-slate-700 px-6 py-3" />
+                          </div>
+                          {enrollment.signature_hash && (
+                            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-3">
+                              <p className="text-[8px] font-mono text-slate-600 break-all">
+                                <span className="text-slate-500 font-bold">SHA-256:</span> {enrollment.signature_hash}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="bg-amber-950/10 border border-amber-900/30 rounded-2xl p-4 flex items-center gap-3">
+                          <AlertCircle size={18} className="text-amber-500" />
+                          <p className="text-xs text-amber-400 font-bold">Assinatura digital não disponível para esta inscrição.</p>
+                        </div>
+                      )}
+
+                      {/* Botão Imprimir apenas o Termo */}
+                      <button
+                        onClick={() => {
+                          const pw = window.open('', '_blank');
+                          if (!pw) return;
+                          pw.document.write(`
+                            <!DOCTYPE html>
+                            <html>
+                              <head>
+                                <title>Termo - ${user.name}</title>
+                                <style>
+                                  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono&display=swap');
+                                  body { font-family: 'Inter', sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; color: #0f172a; }
+                                  .header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 20px; margin-bottom: 30px; }
+                                  .header img { height: 70px; margin-bottom: 8px; }
+                                  .header p { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; color: #64748b; }
+                                  .term { font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1.7; white-space: pre-wrap; color: #334155; }
+                                  .signature-section { margin-top: 40px; border-top: 1px dashed #cbd5e1; padding-top: 25px; }
+                                  .signature-section h3 { font-size: 13px; font-weight: 900; text-transform: uppercase; margin-bottom: 15px; }
+                                  .signature-section img { height: 60px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 16px; }
+                                  .meta { margin-top: 15px; font-size: 9px; color: #94a3b8; }
+                                  .footer { margin-top: 40px; text-align: center; font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+                                </style>
+                              </head>
+                              <body>
+                                <div class="header">
+                                  <img src="/logo.png" alt="Logo">
+                                  <p>Termo de Responsabilidade - Chamado 2024</p>
+                                </div>
+                                <div class="term">${enrollment.consent_term}</div>
+                                ${enrollment.signature_data ? `
+                                  <div class="signature-section">
+                                    <h3>Assinatura Digital</h3>
+                                    <img src="${enrollment.signature_data}" alt="Assinatura">
+                                    <p class="meta">
+                                      Signatário: ${enrollment.full_name}<br>
+                                      CPF: ${enrollment.cpf}<br>
+                                      Data: ${enrollment.created_at ? new Date(enrollment.created_at).toLocaleString('pt-BR') : 'N/A'}<br>
+                                      ${enrollment.signature_hash ? `Hash SHA-256: ${enrollment.signature_hash}` : ''}
+                                    </p>
+                                  </div>
+                                ` : ''}
+                                <div class="footer">
+                                  Gerado em ${new Date().toLocaleString('pt-BR')} • UOU Movement Platform
+                                </div>
+                                <script>window.onload=()=>window.print();<\/script>
+                              </body>
+                            </html>
+                          `);
+                          pw.document.close();
+                        }}
+                        className="flex items-center justify-center gap-3 p-4 bg-slate-800 hover:bg-slate-700 rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
+                      >
+                        <FileDown size={18} /> Imprimir Apenas o Termo
+                      </button>
+
                       <p className="text-[10px] text-slate-600 text-center uppercase tracking-widest">
                         Termo gerado em {enrollment.created_at ? new Date(enrollment.created_at).toLocaleString('pt-BR') : 'data não disponível'}
                       </p>

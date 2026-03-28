@@ -157,7 +157,7 @@ const App: React.FC = () => {
     setAuthModal({ ...authModal, open: false });
   };
 
-  const handleEnrollmentComplete = async (data: EnrollmentData, paymentMethod: string, videoBlob: Blob, consentTerm?: string) => {
+  const handleEnrollmentComplete = async (data: EnrollmentData, paymentMethod: string, videoBlob: Blob, consentTerm?: string, signatureData?: string, signatureHash?: string) => {
     if (!user) return;
 
     setLoading(true);
@@ -177,7 +177,7 @@ const App: React.FC = () => {
       // 1. Salvar os dados detalhados da inscrição
       setLoadingMessage('SALVANDO DADOS DA MISSÃO...');
       console.log('Passo 1: Salvando enrollment...');
-      const enrollResult = await saveEnrollment(user.id, data, consentTerm);
+      const enrollResult = await saveEnrollment(user.id, data, consentTerm, signatureData, signatureHash);
       if (!enrollResult.success) {
         throw new Error(`Falha no banco de dados: ${enrollResult.error}`);
       }
