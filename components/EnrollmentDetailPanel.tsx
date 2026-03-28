@@ -13,7 +13,7 @@ interface EnrollmentDetailPanelProps {
   user: UserProfile;
   onClose: () => void;
   onApprove: (userId: string) => void;
-  onReject: (userId: string) => void;
+  onDelete: (userId: string) => void;
 }
 
 interface SectionProps {
@@ -52,7 +52,7 @@ const Field: React.FC<{ label: string; value?: string | boolean | string[] | nul
   );
 };
 
-const EnrollmentDetailPanel: React.FC<EnrollmentDetailPanelProps> = ({ user, onClose, onApprove, onReject }) => {
+const EnrollmentDetailPanel: React.FC<EnrollmentDetailPanelProps> = ({ user, onClose, onApprove, onDelete }) => {
   const [enrollment, setEnrollment] = useState<any>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -508,11 +508,10 @@ const EnrollmentDetailPanel: React.FC<EnrollmentDetailPanelProps> = ({ user, onC
             <CheckCircle size={18} /> Aprovar
           </button>
           <button
-            onClick={() => { onReject(user.id); onClose(); }}
-            disabled={user.enrollmentStatus === EnrollmentStatus.REJECTED}
-            className="flex-1 flex items-center justify-center gap-2 bg-red-700 hover:bg-red-600 disabled:opacity-30 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-red-900/20 text-sm"
+            onClick={() => { onDelete(user.id); onClose(); }}
+            className="flex-1 flex items-center justify-center gap-2 bg-red-700 hover:bg-red-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-red-900/20 text-sm"
           >
-            <XCircle size={18} /> Rejeitar
+            <Trash2 size={18} /> Excluir
           </button>
         </div>
       </div>

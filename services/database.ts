@@ -245,3 +245,36 @@ export const uploadIdentityVideo = async (
 
   return { success: true, error: null };
 };
+
+/**
+ * Exclui todos os dados de um usuário (Inscrição, Perfil e Arquivos).
+ * Útil para limpeza de dados pelo administrador.
+ */
+export const deleteUserData = async (userId: string): Promise<{ success: boolean; error: string | null }> => {
+  try {
+    // 1. Excluir inscrição
+    const { error: enrollErr } = await supabase
+      .from('enrollments')
+      .delete()
+      .eq('user_id', userId);
+    
+    if (enrollErr) throw enrollErr;
+
+    // 2. Excluir perfil
+    const { error: profileErr } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', userId);
+
+    if (profileErr) throw profileErr;
+
+    // 3. Excluir vídeo do storage se existir
+    const fileName = `${userId}/identity_v1.mp4`;
+    await supabase.storage.from('identities').remove([fileName]);
+
+    return { success: true, error: null };
+  } catch (err: any) {
+    console.error('Erro ao excluir dados do usuário:', err);
+    return { success: false, error: err.message };
+  }
+};

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { UserRole, UserProfile, EnrollmentStatus, PaymentStatus, EnrollmentData } from './types';
 import { supabase } from './services/supabase';
 import { getProfile, updateProfile, getAllProfiles, signOut, onAuthStateChange } from './services/auth';
-import { saveEnrollment, createPayment, uploadIdentityVideo } from './services/database';
+import { saveEnrollment, createPayment, uploadIdentityVideo, deleteUserData } from './services/database';
 import Sidebar from './components/Sidebar';
 import AdminDashboard from './components/AdminDashboard';
 import UserDashboard from './components/UserDashboard';
@@ -243,6 +243,26 @@ const App: React.FC = () => {
     if (user?.id === userId) setUser({ ...user, enrollmentStatus: status });
   };
 
+  const handleDeleteParticipant = async (userId: string) => {
+    if (!window.confirm('TEM CERTEZA? Esta ação excluirá este perfil e todos os dados de inscrição PERMANENTEMENTE do banco de dados.')) return;
+    
+    setLoading(true);
+    setLoadingMessage('ELIMINANDO REGISTRO...');
+    try {
+      const { success, error } = await deleteUserData(userId);
+      if (success) {
+        setEnrollments(prev => prev.filter(e => e.id !== userId));
+      } else {
+        alert(`Falha na eliminação: ${error}`);
+      }
+    } catch (err: any) {
+      alert(`Erro tático: ${err.message}`);
+    } finally {
+      setLoading(false);
+      setLoadingMessage('');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen space-y-4 bg-slate-950">
@@ -306,7 +326,7 @@ const App: React.FC = () => {
           <UsersManagement 
             enrollments={enrollments} 
             onApprove={(id) => updateEnrollmentStatus(id, EnrollmentStatus.APPROVED)}
-            onReject={(id) => updateEnrollmentStatus(id, EnrollmentStatus.REJECTED)}
+            onDelete={handleDeleteParticipant}
           />
         );
       case 'MISSIONS':

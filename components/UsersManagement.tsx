@@ -1,16 +1,15 @@
-
 import React, { useState } from 'react';
 import { UserProfile, EnrollmentStatus, PaymentStatus } from '../types';
-import { Search, Filter, CheckCircle, XCircle, Eye, X } from 'lucide-react';
+import { Search, Filter, CheckCircle, Eye, Trash2 } from 'lucide-react';
 import EnrollmentDetailPanel from './EnrollmentDetailPanel';
 
 interface UsersManagementProps {
   enrollments: UserProfile[];
   onApprove: (userId: string) => void;
-  onReject: (userId: string) => void;
+  onDelete: (userId: string) => void;
 }
 
-const UsersManagement: React.FC<UsersManagementProps> = ({ enrollments, onApprove, onReject }) => {
+const UsersManagement: React.FC<UsersManagementProps> = ({ enrollments, onApprove, onDelete }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
 
@@ -60,7 +59,7 @@ const UsersManagement: React.FC<UsersManagementProps> = ({ enrollments, onApprov
           user={selectedUser}
           onClose={() => setSelectedUser(null)}
           onApprove={onApprove}
-          onReject={onReject}
+          onDelete={onDelete}
         />
       )}
 
@@ -150,12 +149,11 @@ const UsersManagement: React.FC<UsersManagementProps> = ({ enrollments, onApprov
                       <CheckCircle size={18} />
                     </button>
                     <button 
-                      onClick={() => onReject(user.id)}
-                      className="p-2.5 bg-slate-800/50 hover:bg-red-900/40 rounded-xl text-red-500 transition-all hover:scale-110 disabled:opacity-30" 
-                      title="Recusar"
-                      disabled={user.enrollmentStatus === EnrollmentStatus.REJECTED}
+                      onClick={() => onDelete(user.id)}
+                      className="p-2.5 bg-slate-800/50 hover:bg-red-900/60 rounded-xl text-red-500 transition-all hover:scale-110" 
+                      title="Excluir Usuário"
                     >
-                      <XCircle size={18} />
+                      <Trash2 size={18} />
                     </button>
                   </div>
                 </td>
