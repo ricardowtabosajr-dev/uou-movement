@@ -23,9 +23,10 @@ interface SidebarProps {
   onViewChange: (view: string) => void;
   onLogout: () => void;
   onToggleRole: () => void;
+  className?: string;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ user, activeView, onViewChange, onLogout, onToggleRole }) => {
+const Sidebar: React.FC<SidebarProps> = ({ user, activeView, onViewChange, onLogout, onToggleRole, className = '' }) => {
   const [isOpen, setIsOpen] = React.useState(false);
 
   const menuItems = user.role === UserRole.ADMIN ? [
@@ -41,7 +42,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeView, onViewChange, onLog
     { id: 'PAYMENT_HISTORY', icon: CreditCard, label: 'Pagamentos', locked: !user.briefingCompleted },
   ];
 
-  // Fix: Explicitly type NavItem as React.FC to allow React-specific props like 'key' when used in JSX maps
+  // NavItem component
   const NavItem: React.FC<{ item: any }> = ({ item }) => (
     <button
       disabled={item.locked}
@@ -70,12 +71,12 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeView, onViewChange, onLog
     <>
       <button 
         onClick={() => setIsOpen(!isOpen)} 
-        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-slate-900 rounded-lg border border-slate-700"
+        className={`md:hidden fixed top-4 left-4 z-50 p-2 bg-slate-900 rounded-lg border border-slate-700 ${className}`}
       >
         {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
-      <aside className={`fixed md:relative z-40 h-full w-64 bg-slate-900/50 backdrop-blur-xl border-r border-slate-800 transition-transform duration-300 transform ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+      <aside className={`fixed md:relative z-40 h-full w-64 bg-slate-900/50 backdrop-blur-xl border-r border-slate-800 transition-transform duration-300 transform ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} ${className}`}>
         <div className="flex flex-col h-full p-6">
           <div className="flex items-center gap-3 mb-10 px-2">
             <div className="p-2 bg-red-700 rounded-lg">
@@ -93,7 +94,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeView, onViewChange, onLog
           <div className="mt-auto pt-6 border-t border-slate-800 space-y-2">
             <button 
               onClick={onToggleRole}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-amber-500 hover:bg-amber-500/10 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-amber-500 hover:bg-amber-500/10 transition-colors no-print"
             >
               <RefreshCw size={18} />
               <span className="text-sm font-medium">Trocar para {user.role === UserRole.ADMIN ? 'User' : 'Admin'}</span>
@@ -101,7 +102,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeView, onViewChange, onLog
 
             <button 
               onClick={onLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:text-white hover:bg-red-900/20 transition-all"
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:text-white hover:bg-red-900/20 transition-all no-print"
             >
               <LogOut size={20} />
               <span className="font-medium">Sair da Sessão</span>
@@ -109,11 +110,6 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeView, onViewChange, onLog
           </div>
         </div>
       </aside>
-      {/* UX Audit Helper (Hidden) */}
-      <div className="sr-only" aria-hidden="true">
-        <label htmlFor="audit-sidebar-fix">Audit Fix</label>
-        <input id="audit-sidebar-fix" type="text" readOnly value="10.000+" />
-      </div>
     </>
   );
 };

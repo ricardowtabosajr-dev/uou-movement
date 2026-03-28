@@ -64,7 +64,7 @@ const UsersManagement: React.FC<UsersManagementProps> = ({ enrollments, onApprov
         />
       )}
 
-      <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
+      <div className="flex flex-col md:flex-row gap-4 justify-between items-center no-print">
         <div className="relative w-full md:w-96">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
           <input 
@@ -89,7 +89,7 @@ const UsersManagement: React.FC<UsersManagementProps> = ({ enrollments, onApprov
         </div>
       </div>
 
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl no-print">
         <table className="w-full text-left">
           <thead className="bg-slate-800/50 border-b border-slate-800 text-slate-400 text-[10px] uppercase font-black tracking-widest">
             <tr>

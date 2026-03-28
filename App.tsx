@@ -346,10 +346,11 @@ const App: React.FC = () => {
         onViewChange={(v) => setView(v as AppView)} 
         onLogout={handleLogout}
         onToggleRole={handleToggleRole}
+        className="no-print"
       />
       
       <main className="flex-1 overflow-y-auto p-4 md:p-8">
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 no-print">
           <div>
             <h2 className="text-3xl font-black tracking-tighter uppercase">{getViewTitle()}</h2>
             <p className="text-slate-500 font-mono text-[10px] md:text-xs uppercase">
