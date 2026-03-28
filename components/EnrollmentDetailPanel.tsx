@@ -93,9 +93,9 @@ const EnrollmentDetailPanel: React.FC<EnrollmentDetailPanelProps> = ({ user, onC
         max-width: 800px;
         margin: 0 auto;
       }
-      .header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 20px; margin-bottom: 30px; }
-      .header h1 { margin: 0; font-weight: 900; font-size: 32px; letter-spacing: -1px; text-transform: uppercase; }
-      .header p { margin: 5px 0 0; font-weight: 700; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #64748b; }
+      .header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 30px; margin-bottom: 30px; }
+      .header img { height: 80px; width: auto; margin-bottom: 10px; }
+      .header p { margin: 5px 0 0; font-weight: 700; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #64748b; }
       
       .user-profile { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; }
       .user-profile img { width: 80px; height: 80px; border-radius: 15px; border: 2px solid #e2e8f0; }
@@ -185,7 +185,7 @@ const EnrollmentDetailPanel: React.FC<EnrollmentDetailPanelProps> = ({ user, onC
         </head>
         <body>
           <div class="header">
-            <h1>UOU MOVEMENT</h1>
+            <img src="/logo.png" alt="Logo">
             <p>Dossiê Oficial de Recrutamento - Chamado 2024</p>
           </div>
 
@@ -299,9 +299,9 @@ const EnrollmentDetailPanel: React.FC<EnrollmentDetailPanelProps> = ({ user, onC
             </div>
           </div>
           
-          <div className="hidden print:block mb-8 text-center border-b-2 border-slate-900 pb-6">
-            <h1 className="text-3xl font-black uppercase tracking-tighter text-slate-900">UOU MOVEMENT</h1>
-            <h2 className="text-sm font-bold uppercase tracking-widest text-slate-600 mt-1">Dossiê Oficial de Recrutamento</h2>
+          <div className="hidden print:block mb-8 text-center border-b-2 border-slate-900 pb-8">
+            <img src="/logo.png" className="h-20 mx-auto mb-4" alt="" />
+            <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-slate-600">Dossiê Oficial de Recrutamento</h2>
           </div>
 
           <div className="flex items-center gap-4">

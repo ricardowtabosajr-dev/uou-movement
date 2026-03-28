@@ -111,7 +111,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterAdmin, onEnterUser }) 
           </div>
 
           <div className="space-y-4">
-             <p className="text-red-700 font-black tracking-[0.6em] uppercase text-xs md:text-sm animate-pulse">UOU MOVEMENT</p>
+          <div className="flex flex-col items-center gap-6">
+            <img 
+               src="/logo.png" 
+               alt="UOU Movement logo" 
+               className="h-44 md:h-64 w-auto object-contain drop-shadow-[0_0_50px_rgba(185,28,28,0.3)] animate-in fade-in zoom-in duration-1000"
+            />
+          </div>
              <h1 className="text-6xl md:text-[7rem] font-black tracking-tighter leading-[0.9] uppercase">
                As Ondas do <br /> 
                <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-amber-600 to-red-600">Avivamento</span>
