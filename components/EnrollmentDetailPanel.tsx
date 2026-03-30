@@ -186,7 +186,7 @@ const EnrollmentDetailPanel: React.FC<EnrollmentDetailPanelProps> = ({ user, onC
         <body>
           <div class="header">
             <img src="/logo.png" alt="Logo">
-            <p>Dossiê Oficial de Recrutamento - Chamado 2024</p>
+            <p>Dossiê Oficial de Recrutamento</p>
           </div>
 
           <div class="user-profile">
@@ -503,7 +503,7 @@ const EnrollmentDetailPanel: React.FC<EnrollmentDetailPanelProps> = ({ user, onC
                               <body>
                                 <div class="header">
                                   <img src="/logo.png" alt="Logo">
-                                  <p>Termo de Responsabilidade - Chamado 2024</p>
+                                  <p>Termo de Responsabilidade</p>
                                 </div>
                                 <div class="term">${enrollment.consent_term}</div>
                                 ${enrollment.signature_data ? `
