@@ -1,6 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { UserProfile, EnrollmentStatus, PaymentStatus } from '../types';
+import { MissionDB } from '../services/database';
 import {
   Calendar,
   MapPin,
@@ -21,11 +22,12 @@ import {
 
 interface UserDashboardProps {
   user: UserProfile;
+  missions?: MissionDB[];
   onStartEnrollment: () => void;
   onCompleteBriefing: () => void;
 }
 
-const UserDashboard: React.FC<UserDashboardProps> = ({ user, onStartEnrollment, onCompleteBriefing }) => {
+const UserDashboard: React.FC<UserDashboardProps> = ({ user, missions = [], onStartEnrollment, onCompleteBriefing }) => {
   const [showBriefing, setShowBriefing] = useState(false);
   const [briefingCompleted, setBriefingCompleted] = useState(user.briefingCompleted || false);
   const [videoProgress, setVideoProgress] = useState(0);
@@ -37,6 +39,8 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ user, onStartEnrollment, 
   const isApproved = user.enrollmentStatus === EnrollmentStatus.APPROVED;
   const isRejected = user.enrollmentStatus === EnrollmentStatus.REJECTED;
   const hasPaid = user.paymentStatus === PaymentStatus.PAID;
+
+  const activeMission = missions.find(m => m.status === 'IN_PROGRESS') || missions.find(m => m.status === 'OPEN') || null;
 
   const handleStartClick = () => {
     if (briefingCompleted) {
@@ -202,7 +206,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ user, onStartEnrollment, 
               <TimelineItem title="Acesso Criado" desc="Identidade tática ativada." date="Status: OK" completed />
               <TimelineItem title="Briefing e Inscrição" desc="Coleta de dados e verificação selfie." date={isPending ? "Pendente" : "Enviado"} active={isPending} completed={!isPending} />
               <TimelineItem title="Logística e Jurídico" desc="Pagamento e aceite do termo." date={hasPaid ? "Confirmado" : "Aguardando"} active={!isPending && !hasPaid} completed={hasPaid} />
-              <TimelineItem title="Embarque Final" desc="Treinamento presencial." date="Out/2024" active={isApproved} completed={false} />
+              <TimelineItem title="Embarque Final" desc="Treinamento presencial." date={activeMission ? new Date(activeMission.start_date).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }) : 'A definir'} active={isApproved} completed={false} />
             </div>
           </section>
         </div>
@@ -212,11 +216,11 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ user, onStartEnrollment, 
             <div className="space-y-5 text-sm">
               <div className="flex gap-4">
                 <Calendar size={18} className="text-red-500" />
-                <div><p className="text-[10px] text-slate-500 font-black">INÍCIO</p><p className="font-bold">12 Out, 2024</p></div>
+                <div><p className="text-[10px] text-slate-500 font-black">INÍCIO</p><p className="font-bold">{activeMission ? new Date(activeMission.start_date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : 'A definir'}</p></div>
               </div>
               <div className="flex gap-4">
                 <MapPin size={18} className="text-red-500" />
-                <div><p className="text-[10px] text-slate-500 font-black">BASE</p><p className="font-bold">Alpha (Sigilo)</p></div>
+                <div><p className="text-[10px] text-slate-500 font-black">MISSÃO</p><p className="font-bold">{activeMission?.title || 'A definir'}</p></div>
               </div>
             </div>
           </div>

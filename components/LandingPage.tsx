@@ -17,12 +17,15 @@ import {
   Compass
 } from 'lucide-react';
 
+import { MissionDB } from '../services/database';
+
 interface LandingPageProps {
   onEnterAdmin: () => void;
   onEnterUser: () => void;
+  missions?: MissionDB[];
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onEnterAdmin, onEnterUser }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onEnterAdmin, onEnterUser, missions: dbMissions = [] }) => {
   const [mobileMenu, setMobileMenu] = React.useState(false);
 
   const scrollToSection = (id: string) => {
@@ -33,11 +36,24 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterAdmin, onEnterUser }) 
     setMobileMenu(false);
   };
 
-  const missions = [
-    { title: "Vale da Decisão", location: "Base Alpha", intensity: "Nível 4", img: "https://images.unsplash.com/photo-1533240332313-0db49b459ad6?auto=format&fit=crop&q=80" },
-    { title: "Operação Catacumbas", location: "Subsolo Central", intensity: "Nível 5", img: "https://images.unsplash.com/photo-1510252119330-1c9f2801458e?auto=format&fit=crop&q=80" },
-    { title: "Frente Urbana", location: "Metrópoles", intensity: "Nível 3", img: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&q=80" },
+  const defaultMissionImages = [
+    "https://images.unsplash.com/photo-1533240332313-0db49b459ad6?auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1510252119330-1c9f2801458e?auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&q=80",
   ];
+
+  const missions = dbMissions.length > 0 
+    ? dbMissions.filter(m => m.status === 'OPEN' || m.status === 'IN_PROGRESS').map((m, i) => ({
+        title: m.title,
+        location: `${m.enrolled}/${m.capacity} vagas`,
+        intensity: m.status === 'IN_PROGRESS' ? 'Em Andamento' : 'Inscrições Abertas',
+        img: defaultMissionImages[i % defaultMissionImages.length],
+      }))
+    : [
+        { title: "Vale da Decisão", location: "Base Alpha", intensity: "Nível 4", img: defaultMissionImages[0] },
+        { title: "Operação Catacumbas", location: "Subsolo Central", intensity: "Nível 5", img: defaultMissionImages[1] },
+        { title: "Frente Urbana", location: "Metrópoles", intensity: "Nível 3", img: defaultMissionImages[2] },
+      ];
 
   const historicalActions = [
     { year: "2023", name: "Missão Nordeste", impact: "500+ famílias alcançadas", img: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80" },

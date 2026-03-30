@@ -28,10 +28,7 @@ const App: React.FC = () => {
   const [enrollments, setEnrollments] = useState<UserProfile[]>([]);
   const [missions, setMissions] = useState<MissionDB[]>([]);
   const [payments, setPayments] = useState<PaymentDB[]>([]);
-  const [registrationPrice, setRegistrationPrice] = useState(() => {
-    const saved = localStorage.getItem('uou_registration_price');
-    return saved ? parseFloat(saved) : 500.00;
-  });
+  const [registrationPrice, setRegistrationPrice] = useState(500.00);
 
   useEffect(() => {
     localStorage.setItem('uou_registration_price', registrationPrice.toString());
@@ -125,7 +122,16 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // Carregar dados administrativos
+  // Carregar missões para todos (landing page + dashboard do usuário)
+  useEffect(() => {
+    const loadMissions = async () => {
+      const missionsList = await getMissions();
+      setMissions(missionsList);
+    };
+    loadMissions();
+  }, []);
+
+  // Carregar dados administrativos completos
   useEffect(() => {
     if (user?.role === UserRole.ADMIN) {
       loadAdminData();
@@ -308,7 +314,8 @@ const App: React.FC = () => {
       <>
         <LandingPage 
           onEnterAdmin={() => setAuthModal({ open: true, mode: 'LOGIN' })} 
-          onEnterUser={() => setAuthModal({ open: true, mode: 'SIGNUP' })} 
+          onEnterUser={() => setAuthModal({ open: true, mode: 'SIGNUP' })}
+          missions={missions}
         />
         <AuthModal 
           isOpen={authModal.open}
@@ -338,6 +345,7 @@ const App: React.FC = () => {
           <>
             <UserDashboard 
               user={user!} 
+              missions={missions}
               onStartEnrollment={() => setView('ENROLLMENT')} 
               onCompleteBriefing={handleBriefingComplete}
             />
@@ -365,7 +373,7 @@ const App: React.FC = () => {
       case 'REPORTS':
         return <ReportsView enrollments={enrollments} />;
       case 'MISSION_INFO':
-        return <UserDashboard user={user!} onStartEnrollment={() => setView('ENROLLMENT')} onCompleteBriefing={handleBriefingComplete} />;
+        return <UserDashboard user={user!} missions={missions} onStartEnrollment={() => setView('ENROLLMENT')} onCompleteBriefing={handleBriefingComplete} />;
       case 'PAYMENT_HISTORY':
         return <PaymentsManagement enrollments={enrollments.filter(e => e.id === user?.id)} payments={payments.filter(p => p.user_id === user?.id)} price={registrationPrice} isUserMode={true} />;
       default:
