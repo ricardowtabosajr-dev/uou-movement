@@ -206,7 +206,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ user, missions = [], onSt
               <TimelineItem title="Acesso Criado" desc="Identidade tática ativada." date="Status: OK" completed />
               <TimelineItem title="Briefing e Inscrição" desc="Coleta de dados e verificação selfie." date={isPending ? "Pendente" : "Enviado"} active={isPending} completed={!isPending} />
               <TimelineItem title="Logística e Jurídico" desc="Pagamento e aceite do termo." date={hasPaid ? "Confirmado" : "Aguardando"} active={!isPending && !hasPaid} completed={hasPaid} />
-              <TimelineItem title="Embarque Final" desc="Treinamento presencial." date={activeMission ? new Date(activeMission.start_date).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }) : 'A definir'} active={isApproved} completed={false} />
+              <TimelineItem title="Embarque Final" desc="Treinamento presencial." date={activeMission ? new Date(activeMission.start_date + 'T12:00:00').toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }) : 'A definir'} active={isApproved} completed={false} />
             </div>
           </section>
         </div>
@@ -216,7 +216,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ user, missions = [], onSt
             <div className="space-y-5 text-sm">
               <div className="flex gap-4">
                 <Calendar size={18} className="text-red-500" />
-                <div><p className="text-[10px] text-slate-500 font-black">INÍCIO</p><p className="font-bold">{activeMission ? new Date(activeMission.start_date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : 'A definir'}</p></div>
+                <div><p className="text-[10px] text-slate-500 font-black">INÍCIO</p><p className="font-bold">{activeMission ? new Date(activeMission.start_date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : 'A definir'}</p></div>
               </div>
               <div className="flex gap-4">
                 <MapPin size={18} className="text-red-500" />

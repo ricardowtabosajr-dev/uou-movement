@@ -143,7 +143,7 @@ const MissionManagement: React.FC<MissionManagementProps> = ({ onMissionsUpdated
                         <h3 className="text-lg font-black uppercase mb-4">{m.title}</h3>
                         <div className="space-y-3 mb-8">
                            <div className="flex items-center gap-3 text-xs text-slate-400">
-                              <Calendar size={14} className="text-red-500" /> {new Date(m.start_date).toLocaleDateString('pt-BR')}
+                              <Calendar size={14} className="text-red-500" /> {new Date(m.start_date + 'T12:00:00').toLocaleDateString('pt-BR')}
                            </div>
                            <div className="flex items-center gap-3 text-xs text-slate-400">
                               <MapPin size={14} className="text-red-500" /> Base de Treinamento UOU
