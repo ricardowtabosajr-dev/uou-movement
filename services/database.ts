@@ -64,15 +64,21 @@ export const saveEnrollment = async (
     agreed_to_terms: enrollmentData.agreedToTerms,
   };
 
-  if (consentTerm) {
-    dbData.consent_term = consentTerm;
-  }
-  if (signatureData) {
-    dbData.signature_data = signatureData;
-  }
-  if (signatureHash) {
-    dbData.signature_hash = signatureHash;
-  }
+  if (consentTerm) dbData.consent_term = consentTerm;
+  if (signatureData) dbData.signature_data = signatureData;
+  if (signatureHash) dbData.signature_hash = signatureHash;
+
+  console.log('--- ENVIANDO PARA DATABASE ---');
+  console.log('Campos de Assinatura:', { 
+    hasTerm: !!consentTerm, 
+    hasSignature: !!signatureData, 
+    sigLength: signatureData?.length,
+    hasHash: !!signatureHash 
+  });
+  console.log('Dados do Responsável:', { 
+    name: enrollmentData.guardianName, 
+    cpf: enrollmentData.guardianCpf 
+  });
 
   const { error } = await supabase
     .from('enrollments')
