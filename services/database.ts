@@ -68,18 +68,6 @@ export const saveEnrollment = async (
   if (signatureData) dbData.signature_data = signatureData;
   if (signatureHash) dbData.signature_hash = signatureHash;
 
-  console.log('--- ENVIANDO PARA DATABASE ---');
-  console.log('Campos de Assinatura:', { 
-    hasTerm: !!consentTerm, 
-    hasSignature: !!signatureData, 
-    sigLength: signatureData?.length,
-    hasHash: !!signatureHash 
-  });
-  console.log('Dados do Responsável:', { 
-    name: enrollmentData.guardianName, 
-    cpf: enrollmentData.guardianCpf 
-  });
-
   const { error } = await supabase
     .from('enrollments')
     .upsert(dbData, { onConflict: 'user_id' });
@@ -102,23 +90,7 @@ export const getEnrollment = async (userId: string) => {
     .eq('user_id', userId)
     .single();
 
-  if (error || !data) {
-    console.error('[getEnrollment] Erro ou sem dados:', error);
-    return null;
-  }
-
-  console.log('[getEnrollment] Dados retornados do banco:', {
-    user_id: data.user_id,
-    full_name: data.full_name,
-    has_consent_term: !!data.consent_term,
-    has_signature_data: !!data.signature_data,
-    signature_data_length: data.signature_data?.length || 0,
-    has_signature_hash: !!data.signature_hash,
-    signature_hash: data.signature_hash || 'NULL',
-    has_guardian_cpf: !!data.guardian_cpf,
-    all_keys: Object.keys(data),
-  });
-
+  if (error || !data) return null;
   return data;
 };
 

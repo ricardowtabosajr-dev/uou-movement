@@ -1006,10 +1006,6 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, price, onComplete
               <button
                 disabled={hasPaid === null || (hasPaid === true && !paymentMethod)}
                 onClick={() => {
-                  console.log('--- FINALIZANDO INSCRIÇÃO (FORM) ---', { 
-                    hasSign: !!signatureDataUrl, 
-                    hasHash: !!signatureHash 
-                  });
                   onComplete(
                     formData, 
                     hasPaid ? (paymentMethod || 'PENDENTE') : 'PENDENTE', 

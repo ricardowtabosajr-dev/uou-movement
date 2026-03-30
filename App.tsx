@@ -176,11 +176,6 @@ const App: React.FC = () => {
     try {
       // 1. Salvar os dados detalhados da inscrição
       setLoadingMessage('SALVANDO DADOS DA MISSÃO...');
-      console.log('App.tsx: Passo 1: Salvando enrollment...', { 
-        userId: user.id, 
-        hasSign: !!signatureData, 
-        hasHash: !!signatureHash 
-      });
       const enrollResult = await saveEnrollment(user.id, data, consentTerm, signatureData, signatureHash);
       if (!enrollResult.success) {
         throw new Error(`Falha no banco de dados: ${enrollResult.error}`);
