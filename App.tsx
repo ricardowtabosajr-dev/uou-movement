@@ -132,10 +132,12 @@ const App: React.FC = () => {
     loadMissions();
   }, []);
 
-  // Carregar dados administrativos completos
+  // Carregar dados administrativos completos ou missões para usuário
   useEffect(() => {
     if (user?.role === UserRole.ADMIN) {
       loadAdminData();
+    } else if (user?.role === UserRole.USER) {
+      loadMissions();
     }
   }, [user?.role]);
 

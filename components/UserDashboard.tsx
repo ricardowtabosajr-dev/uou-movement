@@ -40,7 +40,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ user, missions = [], onSt
   const isRejected = user.enrollmentStatus === EnrollmentStatus.REJECTED;
   const hasPaid = user.paymentStatus === PaymentStatus.PAID;
 
-  const activeMission = missions.find(m => m.status === 'IN_PROGRESS') || missions.find(m => m.status === 'OPEN') || null;
+  const activeMission = missions.find(m => m.status === 'IN_PROGRESS') || missions.find(m => m.status === 'OPEN') || missions[missions.length - 1] || null;
 
   const handleStartClick = () => {
     if (briefingCompleted) {
