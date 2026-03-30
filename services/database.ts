@@ -177,6 +177,21 @@ export const updateMission = async (
   return { success: true, error: null };
 };
 
+/**
+ * Exclui uma missão.
+ */
+export const deleteMission = async (id: string): Promise<{ success: boolean; error: string | null }> => {
+  const { error } = await supabase
+    .from('missions')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+  return { success: true, error: null };
+};
+
 // ===== PAYMENTS =====
 
 export interface PaymentDB {
