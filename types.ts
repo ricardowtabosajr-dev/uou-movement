@@ -39,6 +39,7 @@ export interface Mission {
   capacity: number;
   enrolled: number;
   status: 'OPEN' | 'CLOSED' | 'IN_PROGRESS';
+  thumbnailUrl?: string;
 }
 
 export interface EnrollmentData {

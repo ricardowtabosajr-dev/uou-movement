@@ -130,6 +130,7 @@ export interface MissionDB {
   capacity: number;
   enrolled: number;
   status: 'OPEN' | 'CLOSED' | 'IN_PROGRESS';
+  thumbnail_url?: string;
 }
 
 /**
@@ -142,7 +143,7 @@ export const getMissions = async (): Promise<MissionDB[]> => {
     .order('start_date', { ascending: true });
 
   if (error || !data) return [];
-  return data;
+  return data as MissionDB[];
 };
 
 /**
@@ -268,6 +269,35 @@ export const uploadIdentityVideo = async (
   }
 
   return { success: true, error: null };
+};
+
+/**
+ * Faz upload de miniatura para missões.
+ */
+export const uploadMissionThumbnail = async (
+  missionId: string,
+  file: File
+): Promise<{ success: boolean; url: string | null; error: string | null }> => {
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${missionId}/thumb_${Date.now()}.${fileExt}`;
+  
+  const { error: uploadError } = await supabase.storage
+    .from('missions_thumbs')
+    .upload(fileName, file, {
+      cacheControl: '3600',
+      upsert: true
+    });
+
+  if (uploadError) {
+    console.error('Erro no upload da thumb:', uploadError);
+    return { success: false, url: null, error: uploadError.message };
+  }
+
+  const { data } = supabase.storage
+    .from('missions_thumbs')
+    .getPublicUrl(fileName);
+
+  return { success: true, url: data.publicUrl, error: null };
 };
 
 /**

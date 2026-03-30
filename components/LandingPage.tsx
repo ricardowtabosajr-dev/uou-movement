@@ -47,7 +47,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterAdmin, onEnterUser, mi
         title: m.title,
         location: `${m.enrolled}/${m.capacity} vagas`,
         intensity: m.status === 'IN_PROGRESS' ? 'Em Andamento' : 'Inscrições Abertas',
-        img: defaultMissionImages[i % defaultMissionImages.length],
+        img: m.thumbnail_url || defaultMissionImages[i % defaultMissionImages.length],
       }))
     : [
         { title: "Vale da Decisão", location: "Base Alpha", intensity: "Nível 4", img: defaultMissionImages[0] },

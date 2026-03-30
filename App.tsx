@@ -122,12 +122,13 @@ const App: React.FC = () => {
     };
   }, []);
 
+  const loadMissions = async () => {
+    const missionsList = await getMissions();
+    setMissions(missionsList);
+  };
+
   // Carregar missões para todos (landing page + dashboard do usuário)
   useEffect(() => {
-    const loadMissions = async () => {
-      const missionsList = await getMissions();
-      setMissions(missionsList);
-    };
     loadMissions();
   }, []);
 
@@ -367,7 +368,7 @@ const App: React.FC = () => {
           />
         );
       case 'MISSIONS':
-        return <MissionManagement />;
+        return <MissionManagement onMissionsUpdated={loadMissions} />;
       case 'PAYMENTS':
         return <PaymentsManagement enrollments={enrollments} payments={payments} price={registrationPrice} onPriceChange={setRegistrationPrice} />;
       case 'REPORTS':

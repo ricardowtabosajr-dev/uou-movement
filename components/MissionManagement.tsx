@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Target, Users, Calendar, MapPin, ChevronRight, AlertTriangle, X, Save, Trash2, Plus, Loader2 } from 'lucide-react';
+import { Target, Users, Calendar, MapPin, ChevronRight, AlertTriangle, X, Save, Trash2, Plus, Loader2, ImageIcon, Upload } from 'lucide-react';
 import { Mission } from '../types';
-import { getMissions, createMission, updateMission, deleteMission, MissionDB } from '../services/database';
+import { getMissions, createMission, updateMission, deleteMission, MissionDB, uploadMissionThumbnail } from '../services/database';
 
-const MissionManagement: React.FC = () => {
+interface MissionManagementProps {
+   onMissionsUpdated?: () => void;
+}
+
+const MissionManagement: React.FC<MissionManagementProps> = ({ onMissionsUpdated }) => {
    const [missions, setMissions] = useState<MissionDB[]>([]);
    const [loading, setLoading] = useState(true);
    const [isModalOpen, setIsModalOpen] = useState(false);
    const [editingMission, setEditingMission] = useState<Partial<MissionDB> | null>(null);
    const [saving, setSaving] = useState(false);
+   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
    useEffect(() => {
       fetchMissions();
@@ -19,12 +25,16 @@ const MissionManagement: React.FC = () => {
       const data = await getMissions();
       setMissions(data);
       setLoading(false);
+      if (onMissionsUpdated) onMissionsUpdated();
    };
 
    const handleOpenModal = (mission?: MissionDB) => {
+      setSelectedFile(null);
       if (mission) {
          setEditingMission(mission);
+         setPreviewUrl(mission.thumbnail_url || null);
       } else {
+         setPreviewUrl(null);
          setEditingMission({
             title: '',
             description: '',
@@ -38,17 +48,46 @@ const MissionManagement: React.FC = () => {
       setIsModalOpen(true);
    };
 
+   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files[0]) {
+         const file = e.target.files[0];
+         setSelectedFile(file);
+         setPreviewUrl(URL.createObjectURL(file));
+      }
+   };
+
    const handleSave = async (e: React.FormEvent) => {
       e.preventDefault();
       if (!editingMission) return;
       
       setSaving(true);
       try {
+         let updatedMission = { ...editingMission };
+
+         if (selectedFile) {
+            if (editingMission.id) {
+               const uploadResult = await uploadMissionThumbnail(editingMission.id, selectedFile);
+               if (uploadResult.success) {
+                  updatedMission.thumbnail_url = uploadResult.url!;
+               }
+            }
+         }
+
          if (editingMission.id) {
-            const result = await updateMission(editingMission.id, editingMission);
+            const result = await updateMission(editingMission.id, updatedMission);
             if (!result.success) alert(`Erro ao atualizar: ${result.error}`);
          } else {
-            const result = await createMission(editingMission as Omit<MissionDB, 'id'>);
+            const result = await createMission(updatedMission as Omit<MissionDB, 'id'>);
+            if (result.success && selectedFile) {
+               const allMissions = await getMissions();
+               const newMission = allMissions.find(m => m.title === updatedMission.title && m.start_date === updatedMission.start_date);
+               if (newMission) {
+                  const uploadResult = await uploadMissionThumbnail(newMission.id, selectedFile);
+                  if (uploadResult.success) {
+                     await updateMission(newMission.id, { thumbnail_url: uploadResult.url! });
+                  }
+               }
+            }
             if (!result.success) alert(`Erro ao criar: ${result.error}`);
          }
          await fetchMissions();
@@ -86,7 +125,10 @@ const MissionManagement: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                {missions.map(m => (
                   <div key={m.id} className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden hover:border-red-500/50 transition-all flex flex-col group text-left">
-                     <div className="h-32 bg-[url('https://images.unsplash.com/photo-1510252119330-1c9f2801458e?auto=format&fit=crop&q=80')] bg-cover bg-center relative">
+                     <div 
+                        className="h-32 bg-cover bg-center relative"
+                        style={{ backgroundImage: `url(${m.thumbnail_url || 'https://images.unsplash.com/photo-1510252119330-1c9f2801458e?auto=format&fit=crop&q=80'})` }}
+                     >
                         <div className="absolute inset-0 bg-slate-950/60"></div>
                         <div className="absolute top-4 right-4">
                            <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest ${m.status === 'OPEN' ? 'bg-emerald-500 text-white' :
@@ -177,6 +219,38 @@ const MissionManagement: React.FC = () => {
                                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all font-bold"
                                  placeholder="Ex: Operação Vale da Decisão"
                               />
+                           </div>
+
+                           <div className="space-y-2">
+                              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Thumbnail da Missão</label>
+                              <div className="flex flex-col md:flex-row gap-4 items-center">
+                                 <div className="w-full md:w-32 h-20 bg-slate-800 rounded-xl overflow-hidden border border-slate-700 flex items-center justify-center relative group">
+                                    {previewUrl ? (
+                                       <img src={previewUrl} className="w-full h-full object-cover" alt="Preview" />
+                                    ) : (
+                                       <ImageIcon className="text-slate-600" size={24} />
+                                    )}
+                                    <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                       <Upload size={16} />
+                                    </div>
+                                 </div>
+                                 <div className="flex-1 w-full">
+                                    <input
+                                       type="file"
+                                       accept="image/*"
+                                       onChange={handleFileChange}
+                                       className="hidden"
+                                       id="mission-thumb-input"
+                                    />
+                                    <label
+                                       htmlFor="mission-thumb-input"
+                                       className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-slate-800 border border-slate-700 rounded-xl font-bold text-xs cursor-pointer hover:bg-slate-700 transition-colors"
+                                    >
+                                       <Upload size={16} /> {previewUrl ? 'Alterar Foto' : 'Selecionar Foto'}
+                                    </label>
+                                    <p className="text-[9px] text-slate-500 mt-2 uppercase tracking-tighter">Recomendado: 800x600px • Máx 2MB</p>
+                                 </div>
+                              </div>
                            </div>
 
                            <div className="space-y-2">
