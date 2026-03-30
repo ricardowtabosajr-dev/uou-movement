@@ -448,26 +448,31 @@ const EnrollmentDetailPanel: React.FC<EnrollmentDetailPanelProps> = ({ user, onC
 
                       {/* Assinatura Digital */}
                       {enrollment.signature_data ? (
-                        <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 space-y-4">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-emerald-700/20 rounded-lg">
-                              <CheckCircle size={18} className="text-emerald-500" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-black uppercase tracking-widest text-emerald-400">Assinatura Digital Registrada</p>
-                              <p className="text-[10px] text-slate-500">Assinatura realizada no ato da inscrição</p>
-                            </div>
+                        <div className="bg-slate-950 border border-slate-800 rounded-2xl p-8 space-y-6">
+                          <div>
+                            <p className="text-lg font-black uppercase tracking-tight text-white mb-6">Assinatura Digital</p>
+                            <img src={enrollment.signature_data} alt="Assinatura" className="h-20 grayscale brightness-200" />
+                            <div className="w-64 h-px bg-slate-700 mt-4 mb-4" />
+                            <p className="text-sm font-bold text-slate-300">{enrollment.full_name}</p>
+                            <p className="text-xs text-slate-500">CPF: {enrollment.cpf}</p>
+                            <p className="text-xs text-slate-500">Email: {user.email}</p>
+                            <p className="text-xs text-slate-500">Data/Hora: {enrollment.signature_timestamp ? new Date(enrollment.signature_timestamp).toLocaleString('pt-BR') : new Date(enrollment.created_at).toLocaleString('pt-BR')}</p>
                           </div>
-                          <div className="flex items-center gap-4">
-                            <img src={enrollment.signature_data} alt="Assinatura" className="h-20 bg-slate-900 rounded-xl border border-slate-700 px-6 py-3" />
-                          </div>
-                          {enrollment.signature_hash && (
-                            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-3">
-                              <p className="text-[8px] font-mono text-slate-600 break-all">
-                                <span className="text-slate-500 font-bold">SHA-256:</span> {enrollment.signature_hash}
-                              </p>
+
+                          <div className="pt-6 border-t border-slate-900 space-y-3">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Metadados Forenses (Lei 14.063/2020)</p>
+                            <div className="grid grid-cols-1 gap-1.5">
+                              <p className="text-[10px] text-slate-500"><span className="font-bold">Endereço IP do Signatário:</span> {enrollment.signature_ip || 'N/A'}</p>
+                              <p className="text-[10px] text-slate-500 max-w-full truncate"><span className="font-bold">User-Agent:</span> {enrollment.signature_user_agent || 'N/A'}</p>
+                              <p className="text-[10px] text-slate-500"><span className="font-bold">Timestamp ISO 8601:</span> {enrollment.signature_timestamp || enrollment.created_at}</p>
+                              <p className="text-[10px] text-slate-500"><span className="font-bold">E-mail verificado via Supabase Auth:</span> {user.email}</p>
                             </div>
-                          )}
+                            {enrollment.signature_hash && (
+                              <div className="mt-2 text-[9px] font-mono text-slate-600 break-all bg-slate-900/50 p-2 rounded">
+                                <span className="font-bold text-slate-500">Hash de Integridade (SHA-256):</span> {enrollment.signature_hash}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       ) : (
                         <div className="bg-amber-950/10 border border-amber-900/30 rounded-2xl p-4 flex items-center gap-3">
@@ -493,10 +498,14 @@ const EnrollmentDetailPanel: React.FC<EnrollmentDetailPanelProps> = ({ user, onC
                                   .header img { height: 70px; margin-bottom: 8px; }
                                   .header p { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; color: #64748b; }
                                   .term { font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1.7; white-space: pre-wrap; color: #334155; }
-                                  .signature-section { margin-top: 40px; border-top: 1px dashed #cbd5e1; padding-top: 25px; }
-                                  .signature-section h3 { font-size: 13px; font-weight: 900; text-transform: uppercase; margin-bottom: 15px; }
-                                  .signature-section img { height: 60px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 16px; }
-                                  .meta { margin-top: 15px; font-size: 9px; color: #94a3b8; }
+                                  .signature-section { margin-top: 40px; border-top: 2px solid #0f172a; padding-top: 30px; }
+                                  .signature-section h3 { font-size: 14px; font-weight: 900; text-transform: uppercase; margin-bottom: 20px; }
+                                  .signature-section img { height: 60px; margin-bottom: 10px; }
+                                  .meta-group { margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
+                                  .meta { font-size: 9px; color: #475569; line-height: 1.5; margin-bottom: 2px; }
+                                  .meta b { color: #0f172a; }
+                                  .forensic { margin-top: 20px; }
+                                  .forensic-title { font-size: 8px; font-weight: 900; text-transform: uppercase; margin-bottom: 8px; color: #0f172a; }
                                   .footer { margin-top: 40px; text-align: center; font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
                                 </style>
                               </head>
@@ -510,12 +519,26 @@ const EnrollmentDetailPanel: React.FC<EnrollmentDetailPanelProps> = ({ user, onC
                                   <div class="signature-section">
                                     <h3>Assinatura Digital</h3>
                                     <img src="${enrollment.signature_data}" alt="Assinatura">
-                                    <p class="meta">
-                                      Signatário: ${enrollment.full_name}<br>
-                                      CPF: ${enrollment.cpf}<br>
-                                      Data: ${enrollment.created_at ? new Date(enrollment.created_at).toLocaleString('pt-BR') : 'N/A'}<br>
-                                      ${enrollment.signature_hash ? `Hash SHA-256: ${enrollment.signature_hash}` : ''}
-                                    </p>
+                                    <div style="width: 200px; height: 1px; background: #0f172a; margin-bottom: 10px;"></div>
+                                    <div class="meta"><b>${enrollment.full_name}</b></div>
+                                    <div class="meta">CPF: ${enrollment.cpf}</div>
+                                    <div class="meta">Email: ${user.email}</div>
+                                    <div class="meta">Data/Hora: ${enrollment.signature_timestamp ? new Date(enrollment.signature_timestamp).toLocaleString('pt-BR') : new Date(enrollment.created_at).toLocaleString('pt-BR')}</div>
+                                    
+                                    <div class="forensic">
+                                      <div class="forensic-title">Metadados Forenses (Lei 14.063/2020 - Assinatura Eletrônica Avançada)</div>
+                                      <div class="meta">Endereço IP do Signatário: ${enrollment.signature_ip || 'N/A'}</div>
+                                      <div class="meta">User-Agent: ${enrollment.signature_user_agent || 'N/A'}</div>
+                                      <div class="meta">Timestamp ISO 8601: ${enrollment.signature_timestamp || enrollment.created_at}</div>
+                                      <div class="meta">E-mail verificado via Supabase Auth: ${user.email}</div>
+                                    </div>
+                                    
+                                    ${enrollment.signature_hash ? `
+                                      <div style="margin-top: 15px; font-size: 7px; color: #64748b; font-family: monospace; border-top: 1px solid #eee; padding-top: 10px;">
+                                        Hash de Integridade (SHA-256): ${enrollment.signature_hash}<br>
+                                        Este documento possui assinatura eletrônica avançada conforme Art. 4° da Lei 14.063/2020.
+                                      </div>
+                                    ` : ''}
                                   </div>
                                 ` : ''}
                                 <div class="footer">

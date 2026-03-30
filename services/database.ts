@@ -12,7 +12,10 @@ export const saveEnrollment = async (
   enrollmentData: EnrollmentData,
   consentTerm?: string,
   signatureData?: string,
-  signatureHash?: string
+  signatureHash?: string,
+  signatureIp?: string,
+  signatureUA?: string,
+  signatureTime?: string
 ): Promise<{ success: boolean; error: string | null }> => {
   const dbData: Record<string, any> = {
     user_id: userId,
@@ -67,6 +70,9 @@ export const saveEnrollment = async (
   if (consentTerm) dbData.consent_term = consentTerm;
   if (signatureData) dbData.signature_data = signatureData;
   if (signatureHash) dbData.signature_hash = signatureHash;
+  if (signatureIp) dbData.signature_ip = signatureIp;
+  if (signatureUA) dbData.signature_user_agent = signatureUA;
+  if (signatureTime) dbData.signature_timestamp = signatureTime;
 
   const { error } = await supabase
     .from('enrollments')

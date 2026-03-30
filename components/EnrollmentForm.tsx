@@ -77,7 +77,7 @@ Local: ${data.city || '[Cidade]'} - ${data.state || '[Estado]'}`;
 interface EnrollmentFormProps {
   user: UserProfile;
   price: number;
-  onComplete: (data: EnrollmentData, paymentMethod: string, videoBlob: Blob, consentTerm?: string, signatureData?: string, signatureHash?: string) => void;
+  onComplete: (data: EnrollmentData, paymentMethod: string, videoBlob: Blob, consentTerm?: string, signatureData?: string, signatureHash?: string, signatureIp?: string, signatureUA?: string, signatureTime?: string) => void;
 }
 
 const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, price, onComplete }) => {
@@ -1012,7 +1012,10 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({ user, price, onComplete
                     videoBlob!, 
                     consentTerm || undefined, 
                     signatureDataUrl || undefined, 
-                    signatureHash || undefined
+                    signatureHash || undefined,
+                    signerIp || undefined,
+                    signerUserAgent.current || undefined,
+                    signatureTimestamp || undefined
                   );
                 }}
                 className="w-full md:w-auto px-20 py-6 bg-red-700 hover:bg-red-600 disabled:opacity-20 text-white rounded-2xl font-black uppercase tracking-widest transition-all shadow-2xl flex items-center justify-center gap-4 text-sm group"
