@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { UserProfile, EnrollmentStatus, PaymentStatus } from '../types';
-import { Search, Filter, CheckCircle, Eye, Trash2 } from 'lucide-react';
+import { Search, Filter, CheckCircle, Eye, Trash2, X, ChevronDown, Check } from 'lucide-react';
 import EnrollmentDetailPanel from './EnrollmentDetailPanel';
 
 interface UsersManagementProps {
@@ -12,11 +12,40 @@ interface UsersManagementProps {
 const UsersManagement: React.FC<UsersManagementProps> = ({ enrollments, onApprove, onDelete }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [selectedEnrollmentStatuses, setSelectedEnrollmentStatuses] = useState<EnrollmentStatus[]>([]);
+  const [selectedPaymentStatuses, setSelectedPaymentStatuses] = useState<PaymentStatus[]>([]);
 
-  const filtered = enrollments.filter(e => 
-    e.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    e.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const toggleEnrollmentStatus = (status: EnrollmentStatus) => {
+    setSelectedEnrollmentStatuses(prev => 
+      prev.includes(status) ? prev.filter(s => s !== status) : [...prev, status]
+    );
+  };
+
+  const togglePaymentStatus = (status: PaymentStatus) => {
+    setSelectedPaymentStatuses(prev => 
+      prev.includes(status) ? prev.filter(s => s !== status) : [...prev, status]
+    );
+  };
+
+  const clearFilters = () => {
+    setSelectedEnrollmentStatuses([]);
+    setSelectedPaymentStatuses([]);
+    setSearchTerm('');
+  };
+
+  const filtered = enrollments.filter(e => {
+    const matchesSearch = e.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         e.email.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesEnrollment = selectedEnrollmentStatuses.length === 0 || 
+                             (e.enrollmentStatus && selectedEnrollmentStatuses.includes(e.enrollmentStatus));
+                             
+    const matchesPayment = selectedPaymentStatuses.length === 0 || 
+                          (e.paymentStatus && selectedPaymentStatuses.includes(e.paymentStatus));
+
+    return matchesSearch && matchesEnrollment && matchesPayment;
+  });
 
   const getStatusColor = (status?: EnrollmentStatus) => {
     switch (status) {
@@ -75,10 +104,75 @@ const UsersManagement: React.FC<UsersManagementProps> = ({ enrollments, onApprov
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex gap-2">
-          <button className="flex items-center gap-2 px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors">
-            <Filter size={18} /> Filtrar Status
+        <div className="flex gap-2 relative">
+          <button 
+            onClick={() => setIsFilterOpen(!isFilterOpen)}
+            className={`flex items-center gap-2 px-4 py-3 border rounded-xl text-sm font-bold transition-all ${
+              isFilterOpen || selectedEnrollmentStatuses.length > 0 || selectedPaymentStatuses.length > 0
+              ? 'bg-red-500/10 border-red-500/50 text-red-500' 
+              : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
+            }`}
+          >
+            <Filter size={18} /> 
+            Filtrar Status
+            {(selectedEnrollmentStatuses.length > 0 || selectedPaymentStatuses.length > 0) && (
+              <span className="flex items-center justify-center w-5 h-5 bg-red-600 text-white text-[10px] rounded-full ml-1">
+                {selectedEnrollmentStatuses.length + selectedPaymentStatuses.length}
+              </span>
+            )}
+            <ChevronDown size={16} className={`transition-transform duration-300 ${isFilterOpen ? 'rotate-180' : ''}`} />
           </button>
+
+          {isFilterOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setIsFilterOpen(false)}></div>
+              <div className="absolute top-full right-0 mt-2 w-64 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in zoom-in-95 duration-200">
+                <div className="p-4 border-b border-slate-800 flex justify-between items-center">
+                  <span className="text-xs font-black uppercase tracking-widest text-slate-400">Filtros</span>
+                  <button onClick={clearFilters} className="text-[10px] font-bold text-red-500 hover:underline">Limpar</button>
+                </div>
+                
+                <div className="p-2 space-y-4 max-h-[400px] overflow-y-auto">
+                  <div>
+                    <p className="px-2 pb-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Inscrição</p>
+                    <div className="space-y-1">
+                      {Object.values(EnrollmentStatus).map(status => (
+                        <button 
+                          key={status}
+                          onClick={() => toggleEnrollmentStatus(status)}
+                          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-colors ${
+                            selectedEnrollmentStatuses.includes(status) ? 'bg-slate-800 text-white' : 'text-slate-400 hover:bg-slate-800/50'
+                          }`}
+                        >
+                          {status}
+                          {selectedEnrollmentStatuses.includes(status) && <Check size={14} className="text-red-500" />}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="px-2 pb-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Financeiro</p>
+                    <div className="space-y-1">
+                      {Object.values(PaymentStatus).map(status => (
+                        <button 
+                          key={status}
+                          onClick={() => togglePaymentStatus(status)}
+                          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-colors ${
+                            selectedPaymentStatuses.includes(status) ? 'bg-slate-800 text-white' : 'text-slate-400 hover:bg-slate-800/50'
+                          }`}
+                        >
+                          {status}
+                          {selectedPaymentStatuses.includes(status) && <Check size={14} className="text-red-500" />}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
           <button 
             onClick={handleExportCSV}
             className="flex items-center gap-2 px-4 py-3 bg-red-700 rounded-xl text-sm font-bold hover:bg-red-600 transition-colors shadow-lg shadow-red-900/20"
