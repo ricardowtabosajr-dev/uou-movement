@@ -256,23 +256,6 @@ const App: React.FC = () => {
     }
   };
 
-  const handleToggleRole = async () => {
-    if (!user) return;
-    const newRole = user.role === UserRole.ADMIN ? UserRole.USER : UserRole.ADMIN;
-    
-    setLoading(true);
-    try {
-      await updateProfile(user.id, { role: newRole });
-      setUser({ ...user, role: newRole });
-      if (newRole === UserRole.ADMIN) {
-        await loadAdminData();
-      }
-    } catch (err: any) {
-      alert("Erro ao alterar privilégios no servidor.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const updateEnrollmentStatus = async (userId: string, status: EnrollmentStatus) => {
     await updateProfile(userId, { enrollmentStatus: status });
@@ -405,7 +388,6 @@ const App: React.FC = () => {
         activeView={view} 
         onViewChange={(v) => setView(v as AppView)} 
         onLogout={handleLogout}
-        onToggleRole={handleToggleRole}
         className="no-print"
       />
       

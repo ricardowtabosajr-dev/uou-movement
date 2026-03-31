@@ -23,11 +23,10 @@ interface SidebarProps {
   activeView: string;
   onViewChange: (view: string) => void;
   onLogout: () => void;
-  onToggleRole: () => void;
   className?: string;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ user, activeView, onViewChange, onLogout, onToggleRole, className = '' }) => {
+const Sidebar: React.FC<SidebarProps> = ({ user, activeView, onViewChange, onLogout, className = '' }) => {
   const [isOpen, setIsOpen] = React.useState(false);
 
   const hasEnrolled = user.enrollmentStatus === EnrollmentStatus.PENDING 
@@ -110,14 +109,6 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeView, onViewChange, onLog
           </nav>
 
           <div className="mt-auto pt-6 border-t border-slate-800 space-y-2">
-            <button 
-              onClick={onToggleRole}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-amber-500 hover:bg-amber-500/10 transition-colors no-print"
-            >
-              <RefreshCw size={18} />
-              <span className="text-sm font-medium">Trocar para {user.role === UserRole.ADMIN ? 'User' : 'Admin'}</span>
-            </button>
-
             <button 
               onClick={onLogout}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:text-white hover:bg-red-900/20 transition-all no-print"
